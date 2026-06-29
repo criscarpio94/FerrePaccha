@@ -28,6 +28,7 @@ fun PantallaAdmin(
 
         SubPantallaAdmin.DASHBOARD -> {
             //Pendiente completar
+            ComponenteDashboard(viewModel = viewModel)
         }
 
         SubPantallaAdmin.CARGAR_PRODUCTO -> {

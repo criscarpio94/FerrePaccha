@@ -1,6 +1,7 @@
 package com.example.ferrepaccha.interfaz
 
 import android.R
+import android.widget.QuickContactBadge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -16,8 +17,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -27,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.TextToolbar
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -289,6 +296,223 @@ fun ComponenteLogin(
     }
 }
 
+//3.- Subpantalla Dashboard principal
+@Composable
+fun ComponenteDashboard(
+    viewModel: AdminViewModel
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(FerreBlanco)
+    ) {
+        //Encabezado
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(FerreGrisOscuro)
+                .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 20.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Hola, ${viewModel.nombreAdministrador} 👋",
+                        color = FerreAmarillo,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "PANEL DE ADMINISTRACION",
+                        color = Color.Gray,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp
+                    )
+                    Text(
+                        text = "FERRETERIA PACCHA",
+                        color = FerreBlanco,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+                //Iconos (notificacion y salida )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = {/* mostrara notificaciones */}) {
+                        Text(text = "\uD83D\uDD14", fontSize = 22.sp)
+                    }
+                    IconButton(onClick = { viewModel.cerrarSesion() }) {
+                        Text(text = "➜\uD83D\uDEAA", fontSize = 17.sp, color = Color.White)
+                    }
+                }
+            }
+        }
+
+        //Cuerpo de pantalla inicial administradores
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            //Resumen del día
+            Text(
+                text = "RESUMEN DEL DIA",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Gray,
+                letterSpacing = 0.5.sp
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+
+            //Cuadro de tarjetas resumen
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                CardResumen(modifier = Modifier.weight(1f), icono = "\uD83D\uDCE6", valor = "2", etiqueta = "Pedidos Hoy", fondo = Color(0xFFEFF6FF), colorTexto = Color(0xFF2563EB))
+                CardResumen(modifier = Modifier.weight(1f), icono = "⏳", valor = "2", etiqueta = "Pendientes", fondo = Color(0xFFFFFBEB), colorTexto = Color(0xFFD97706))
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                CardResumen(modifier = Modifier.weight(1f), icono = "\uD83D\uDCB0", valor = "$95.50", etiqueta = "INgresos", fondo = Color(0xFFF0FDF4), colorTexto = Color(0xFF16A34A))
+                CardResumen(modifier = Modifier.weight(1f), icono = "✅", valor = "0", etiqueta = "Completados", fondo = Color(0xFFF8FAFC), colorTexto = Color(0xFF64748B))
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "ACCIONES",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Gray,
+                letterSpacing = 0.5.sp
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                //Boton para cargar nuevos productos
+                ButtonAccionPrincipal(
+                    modifier = Modifier.weight(1f),
+                    titulo = "CARGAR\nPRODUCTO",
+                    icono = "\uD83D\uDCE4",
+                    esOscuro = false,
+                    onClick = { viewModel.cambiarPantalla(SubPantallaAdmin.CARGAR_PRODUCTO) }
+                )
+
+                //Boton para cargar atender pedidos
+                ButtonAccionPrincipal(
+                    modifier = Modifier.weight(1f),
+                    titulo = "ATENDER\nPEDIDOS",
+                    icono = "\uD83D\uDCE6",
+                    esOscuro = true,
+                    badgeContador = "2",
+                    onClick = { viewModel.cambiarPantalla(SubPantallaAdmin.GESTION_PEDIDOS) }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            //Apartado de pedidos recientes
+            Text(
+                text = "PEDIDOS RECIENTES",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Gray,
+                letterSpacing = 0.5.sp
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+
+            //Listado de pedidos recientes
+            CardPedidoReciente(codigo = "PED-2024-010", cliente = "Juan Carlos Perez Lopez", estado = "Preparando", total = "$53.00", colorEstado = FerreAmarillo, onClick = { viewModel.cambiarPantalla(SubPantallaAdmin.DETALLE_PEDIDO) })
+            Spacer(modifier = Modifier.height(8.dp))
+            CardPedidoReciente(codigo = "PED-2024-002", cliente = "Maria Elena Torres Ruiz", estado = "Confirmado", total = "$42.50", colorEstado = Color(0xFFBFDBFE), colorTextoEstado = Color(0xFF1E40AF), onClick = { viewModel.cambiarPantalla(SubPantallaAdmin.DETALLE_PEDIDO) })
+        }
+    }
+}
+
+//Componente de apoyo tarjetas resumen
+@Composable
+fun CardResumen(modifier: Modifier, icono: String, valor: String, etiqueta: String, fondo: Color, colorTexto: Color ) {
+    Card(
+        modifier = modifier.height(95.dp),
+        colors = CardDefaults.cardColors(containerColor = fondo),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.SpaceBetween) {
+            Text(text = icono, fontSize = 18.sp)
+            Column{
+                Text(text = valor, fontSize = 20.sp, fontWeight = FontWeight.Black, color = colorTexto)
+                Text(text = etiqueta, fontSize = 11.sp, color = Color.Gray, fontWeight = FontWeight.Medium)
+            }
+        }
+    }
+}
+
+//Componente de apoyo de botones princpaples para crear productos o atendere pedido
+@Composable
+fun ButtonAccionPrincipal(modifier: Modifier, titulo: String, icono: String, esOscuro: Boolean, badgeContador: String? = null, onClick: () -> Unit) {
+    Card(
+        modifier = modifier
+            .height(110.dp)
+            .clip(RoundedCornerShape(18.dp)),
+        colors = CardDefaults.cardColors(containerColor = if (esOscuro) FerreGrisOscuro else FerreAmarillo),
+        onClick = onClick
+    ) {
+        Box(modifier = Modifier.fillMaxSize().padding(14.dp)) {
+            if (badgeContador != null) {
+                Box(
+                    modifier = Modifier
+                        .size(22.dp)
+                        .background(FerreAmarillo, RoundedCornerShape(11.dp))
+                        .align(Alignment.TopEnd),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = badgeContador, color = FerreGrisOscuro, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
+                Text(text = icono, fontSize = 22.sp, color = if (esOscuro) FerreBlanco else FerreGrisOscuro)
+                Text(text = titulo, fontSize = 14.sp, fontWeight = FontWeight.Black, color = if (esOscuro) FerreBlanco else FerreGrisOscuro, lineHeight = 16.sp)
+            }
+        }
+    }
+}
+
+//Componente para las filas de pedidos recientes
+@Composable
+fun CardPedidoReciente(codigo: String, cliente: String, estado: String, total: String, colorEstado: Color, colorTextoEstado: Color = FerreGrisOscuro, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+        shape = RoundedCornerShape(14.dp),
+        onClick = onClick
+    ) {
+        Row(modifier = Modifier.fillMaxWidth().padding(14.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Column{
+                Text(text = codigo, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = FerreGrisOscuro)
+                Text(text = cliente, fontSize = 12.sp, color = Color.Gray)
+            }
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Box(modifier = Modifier.background(colorEstado, RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp)) {
+                    Text(text = estado, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = colorTextoEstado)
+                }
+                Text(text = total, fontWeight = FontWeight.Black, fontSize = 14.sp, color = FerreGrisOscuro)
+            }
+        }
+    }
+}
+
+
+
+
+
 @Preview(showBackground = true)
 @Composable
 fun PreviewAdvertenciaIndividual() {
@@ -302,5 +526,13 @@ fun PreviewAdvertenciaIndividual() {
 fun PreviewComponenteLogin() {
     com.example.ferrepaccha.ui.theme.FerrePacchaTheme {
         ComponenteLogin(onFlechaRegresar = {}, viewModel = AdminViewModel())
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewComponenteDashboard() {
+    com.example.ferrepaccha.ui.theme.FerrePacchaTheme {
+        ComponenteDashboard(viewModel = AdminViewModel())
     }
 }
