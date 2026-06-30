@@ -33,10 +33,18 @@ fun PantallaAdmin(
 
         SubPantallaAdmin.CARGAR_PRODUCTO -> {
             //Pendiente completar
+            ComponenteCargarProducto(
+                viewModel = viewModel,
+                onFlechaRegresar = { viewModel.cambiarPantalla(SubPantallaAdmin.DASHBOARD) }
+            )
         }
 
         SubPantallaAdmin.GESTION_PEDIDOS -> {
             //Pendiente completar
+            ComponenteGestionPedidos(
+                viewModel = viewModel,
+                onFlechaRegresar = { viewModel.cambiarPantalla(SubPantallaAdmin.DASHBOARD) }
+            )
         }
 
         SubPantallaAdmin.DETALLE_PEDIDO -> {

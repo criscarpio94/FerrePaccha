@@ -52,6 +52,10 @@ class AdminViewModel : ViewModel() {
         menuCategoriasExpandido = false
     }
 
+    //Estados para apartado de atender pedidos
+    var busquedaPedidoInput by mutableStateOf("")
+    var filtroFechaInput by mutableStateOf("")
+
 
     //INTENTOS DE INGRESO
     var intentosFallidos by mutableStateOf(0)
