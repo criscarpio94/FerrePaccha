@@ -1,6 +1,7 @@
 package com.example.ferrepaccha.interfaz
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -28,6 +29,29 @@ class AdminViewModel : ViewModel() {
     var contrasenaInput by mutableStateOf("")
     var contrasenaVisible by mutableStateOf(false)
     var mensajeError by mutableStateOf("")
+
+    //FORMULARIO PARA CARGA DE PRODUCTOS
+    var nombreProductoInput by mutableStateOf("")
+    var codigoProductoInput by mutableStateOf("")
+    var precioProductoInput by mutableStateOf("")
+    var marcaProductoInput by mutableStateOf("")
+    var medidaProductoInput by mutableStateOf("")
+    var categoriaProductoInput by mutableStateOf("")
+    var menuCategoriasExpandido by mutableStateOf(false)
+    var descripcionProductoInput by mutableStateOf("")
+
+    //Funcion para limpiar la pantalla al guardar los productos nuevos
+    fun limpiarFormularioProducto() {
+        nombreProductoInput = ""
+        codigoProductoInput = ""
+        precioProductoInput = ""
+        marcaProductoInput = ""
+        medidaProductoInput = ""
+        categoriaProductoInput = ""
+        descripcionProductoInput = ""
+        menuCategoriasExpandido = false
+    }
+
 
     //INTENTOS DE INGRESO
     var intentosFallidos by mutableStateOf(0)

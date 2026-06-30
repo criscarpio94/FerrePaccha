@@ -2,8 +2,11 @@ package com.example.ferrepaccha.interfaz
 
 import android.R
 import android.widget.QuickContactBadge
+import android.widget.Space
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Logout
@@ -24,9 +28,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -34,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.TextToolbar
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -48,6 +56,7 @@ import com.example.ferrepaccha.ui.theme.FerreAmarillo
 import com.example.ferrepaccha.ui.theme.FerreBlanco
 import com.example.ferrepaccha.ui.theme.FerreGrisClaro
 import com.example.ferrepaccha.ui.theme.FerreGrisOscuro
+import kotlin.math.sin
 
 //1.- Subpantalla: Advertencia
 @Composable
@@ -509,6 +518,264 @@ fun CardPedidoReciente(codigo: String, cliente: String, estado: String, total: S
     }
 }
 
+//4.- Subpantalla Cargar producto
+@Composable
+fun ComponenteCargarProducto(
+    viewModel: AdminViewModel,
+    onFlechaRegresar: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(FerreBlanco)
+    ) {
+        //Encabezado negro y texto blanco
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(FerreGrisOscuro)
+                .padding(horizontal = 4.dp, vertical = 12.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            IconButton(
+                onClick = onFlechaRegresar,
+                modifier = Modifier.align(Alignment.CenterStart)
+            ) {
+                Text(
+                    text = "←",
+                    color = FerreBlanco,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Text(
+                text = "Cargar Producto",
+                color = FerreBlanco,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+    Spacer(modifier = Modifier.height(50.dp))
+
+    //Cuerpo de los campos del formulario
+    androidx.compose.foundation.rememberScrollState().let { scrollState ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+
+        ) {
+            //Recuadro para cargar fotografia
+            Spacer(modifier = Modifier.height(50.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(130.dp)
+                    .border(1.dp, Color.LightGray, RoundedCornerShape(25.dp))
+                    .background(Color(0xFFFAFAFA), RoundedCornerShape(16.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(text = "\uD83D\uDCE4", fontSize = 28.sp, color = Color.Gray)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(text = "Toca para subir fotografia", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.Gray)
+                    Text(text = "JPG, PNG - Máx. 5MB", fontSize = 11.sp, color = Color.LightGray)
+                }
+            }
+             //Campo: nombre del producto
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(text = "NOMBRE DEL PRODUCTO *", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                Spacer(modifier = Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = viewModel.nombreProductoInput,
+                    onValueChange = { viewModel.nombreProductoInput = it },
+                    placeholder = { Text(text = "Ej: Martillo Carpintero 16oz", color = Color.LightGray) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    singleLine = true
+                )
+            }
+             //Campos codigo y precio
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = "CÓDIGO *", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = viewModel.codigoProductoInput,
+                        onValueChange = { viewModel.codigoProductoInput = it },
+                        placeholder = { Text(text = "HERR-001", color = Color.LightGray) },
+                        shape = RoundedCornerShape(14.dp),
+                        singleLine = true
+                    )
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "PRECIO ($) *",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = viewModel.precioProductoInput,
+                        onValueChange = { viewModel.precioProductoInput = it },
+                        placeholder = { Text(text = "0.00", color = Color.LightGray) },
+                        shape = RoundedCornerShape(14.dp),
+                        singleLine = true
+                    )
+                }
+            }
+
+            //Campos: marca y medida
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = "MARCA *", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = viewModel.marcaProductoInput,
+                        onValueChange = { viewModel.marcaProductoInput = it },
+                        placeholder = { Text(text = "Stanley", color = Color.LightGray) },
+                        shape = RoundedCornerShape(14.dp),
+                        singleLine = true
+                    )
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = "MEDIDA / UNIDAD *", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = viewModel.medidaProductoInput,
+                        onValueChange = { viewModel.medidaProductoInput = it },
+                        placeholder = { Text(text = "Unidad", color = Color.LightGray) },
+                        shape = RoundedCornerShape(14.dp),
+                        singleLine = true
+                    )
+                }
+            }
+
+            //Campo: Categoria
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(text = "CATEGORIA *", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                Spacer(modifier = Modifier.height(4.dp))
+
+                //Contenedor desplegable
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = viewModel.categoriaProductoInput,
+                        onValueChange = {},
+                        readOnly = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
+                        singleLine = true,
+                        leadingIcon = {
+                            val icono = when (viewModel.categoriaProductoInput) {
+                                "Herramientas" -> "\uD83D\uDD27"
+                                "Eléctrico" -> "⚡"
+                                "Pintura" -> "🎨"
+                                "Construcción" -> "🧱"
+                                "Plomería" -> "🔩"
+                                else -> "\uD83D\uDCE6"
+                            }
+                            Text(text = icono, fontSize = 16.sp)
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { viewModel.menuCategoriasExpandido = true }) {
+                                Text(text = if (viewModel.menuCategoriasExpandido) "▲" else "▼", fontSize = 12.sp, color = Color.Gray)
+                            }
+                        },
+
+                        //Opcion clickeable para abrir el menu de opciones de categorias
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = FerreAmarillo,
+                            unfocusedBorderColor = Color.LightGray
+                        )
+                    )
+
+                    //Parte transparente para poder identificar el click
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clickable { viewModel.menuCategoriasExpandido = true }
+                    )
+
+                    //Menu nativo de compose
+                    DropdownMenu(
+                        expanded = viewModel.menuCategoriasExpandido,
+                        onDismissRequest = { viewModel.menuCategoriasExpandido = false },
+                        modifier = Modifier
+                            .fillMaxWidth(0.9f)
+                            .background(FerreBlanco)
+                    ) {
+                        //Definicion de la lista exacta
+                        val opciones = listOf(
+                            "Herramientas" to "🔧",
+                            "Eléctrico" to "⚡",
+                            "Pintura" to "🎨",
+                            "Construcción" to "🧱",
+                            "Plomería" to "🔩"
+                        )
+
+                        opciones.forEach { (nombre, icono) ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(text = icono, fontSize = 16.sp)
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text(text = nombre, fontSize = 14.sp, color = FerreGrisOscuro)
+                                    }
+                                },
+                                onClick = {
+                                    viewModel.categoriaProductoInput = nombre
+                                    viewModel.menuCategoriasExpandido = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            //Campo para descripcion del producto
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(text = "DESCRIPCION", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                Spacer(modifier = Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = viewModel.descripcionProductoInput,
+                    onValueChange = { viewModel.descripcionProductoInput = it },
+                    placeholder = { Text(text = "Descripción detallada del producto...", color = Color.LightGray) },
+                    modifier = Modifier.fillMaxWidth().height(100.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    maxLines = 4
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            //Boton para guardar productos creados.
+            Button(
+                onClick = {
+                    viewModel.limpiarFormularioProducto()
+                    viewModel.cambiarPantalla(SubPantallaAdmin.DASHBOARD)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = FerreAmarillo),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Text(
+                    text = "Guardar Producto al Catálogo",
+                    color = FerreGrisOscuro,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 16.sp
+                )
+            }
+        }
+    }
+}
+
 
 
 
@@ -534,5 +801,13 @@ fun PreviewComponenteLogin() {
 fun PreviewComponenteDashboard() {
     com.example.ferrepaccha.ui.theme.FerrePacchaTheme {
         ComponenteDashboard(viewModel = AdminViewModel())
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewComponenteCargarProducto() {
+    com.example.ferrepaccha.ui.theme.FerrePacchaTheme {
+        ComponenteCargarProducto(viewModel = AdminViewModel(), onFlechaRegresar = {})
     }
 }
