@@ -49,6 +49,10 @@ fun PantallaAdmin(
 
         SubPantallaAdmin.DETALLE_PEDIDO -> {
             //Pendiente completar
+            ComponenteDetallePedido(
+                viewModel = viewModel,
+                onFlechaRegresar = { viewModel.cambiarPantalla(SubPantallaAdmin.GESTION_PEDIDOS) }
+            )
         }
     }
 }

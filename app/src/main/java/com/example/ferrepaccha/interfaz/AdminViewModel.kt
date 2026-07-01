@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.compose.ui.graphics.Color
 
 //Clase enum para las subpantallas que se desprenden de Administradores
 enum class SubPantallaAdmin {
@@ -55,6 +56,29 @@ class AdminViewModel : ViewModel() {
     //Estados para apartado de atender pedidos
     var busquedaPedidoInput by mutableStateOf("")
     var filtroFechaInput by mutableStateOf("")
+
+
+    //Estados para el detalle de los pedidos
+    var estadoPedidoSimulado by mutableStateOf("Peparando")
+    var textoBotonEstado by mutableStateOf("Actualizar estado → Pedido Listo")
+    var colorEstadoSimulado by mutableStateOf(Color(0xFFFEF3C7))
+    var colorTextoEstadoSimulado by mutableStateOf(Color(0xFFD97706))
+
+    fun avanzarEstadoPedido(contex: android.content.Context) {
+        if (estadoPedidoSimulado == "Preparando") {
+            estadoPedidoSimulado = "Pedido Listo"
+            textoBotonEstado = "Actualizar estado → Entregado"
+            colorEstadoSimulado = Color(0xFFD1FAE5)
+            colorTextoEstadoSimulado = Color(0xFF065F46)
+            android.widget.Toast.makeText(contex, "✨ ¡Pedido marcado como LISTO!", android.widget.Toast.LENGTH_SHORT).show()
+        } else if (estadoPedidoSimulado == "Pedido Listo") {
+            estadoPedidoSimulado ="Entregado"
+            textoBotonEstado = "Pedido Finalizado y Entregado"
+            colorEstadoSimulado = Color(0xFFE2E8F0)
+            colorTextoEstadoSimulado = Color(0xFF475569)
+            android.widget.Toast.makeText(contex,"\uD83D\uDCE6 ¡Pedido completado con éxito!", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
 
 
     //INTENTOS DE INGRESO

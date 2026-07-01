@@ -33,6 +33,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -42,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.VectorProperty
+import androidx.compose.ui.layout.VerticalAlignmentLine
 import androidx.compose.ui.platform.TextToolbar
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.text.font.FontWeight
@@ -442,7 +444,7 @@ fun ComponenteDashboard(
             Spacer(modifier = Modifier.height(10.dp))
 
             //Listado de pedidos recientes
-            CardPedidoReciente(codigo = "PED-2024-010", cliente = "Juan Carlos Perez Lopez", estado = "Preparando", total = "$53.00", colorEstado = FerreAmarillo, onClick = { viewModel.cambiarPantalla(SubPantallaAdmin.DETALLE_PEDIDO) })
+            CardPedidoReciente(codigo = "PED-2024-001", cliente = "Juan Carlos Perez Lopez", estado = "Preparando", total = "$53.00", colorEstado = FerreAmarillo, onClick = { viewModel.cambiarPantalla(SubPantallaAdmin.DETALLE_PEDIDO) })
             Spacer(modifier = Modifier.height(8.dp))
             CardPedidoReciente(codigo = "PED-2024-002", cliente = "Maria Elena Torres Ruiz", estado = "Confirmado", total = "$42.50", colorEstado = Color(0xFFBFDBFE), colorTextoEstado = Color(0xFF1E40AF), onClick = { viewModel.cambiarPantalla(SubPantallaAdmin.DETALLE_PEDIDO) })
         }
@@ -864,7 +866,7 @@ fun ComponenteGestionPedidos(
         }
 
         //Cuerpo para los pedidos (se puede scrolear)
-        androidx.compose.foundation.rememberScrollState().let { scrollState -> 
+        androidx.compose.foundation.rememberScrollState().let { scrollState ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -881,28 +883,40 @@ fun ComponenteGestionPedidos(
                     letterSpacing = 0.5.sp
                 )
 
-                //Pedido de prueba - pendiente
-                CardPedidoPendienteReal(
-                    codigo = "PED-2026-001",
-                    cliente = "Juan Carlos Perez Lopez",
-                    productos = "2 productos(s)",
-                    tipoEntrega = "\uD83D\uDE9A Domicilio",
-                    total = "$53.00",
-                    estado = "Preparando",
-                    colorEstado = FerreAmarillo
-                )
+                //Pedido de prueba 1 - pendiente
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { viewModel.cambiarPantalla(SubPantallaAdmin.DETALLE_PEDIDO) }
+                ) {
+                    CardPedidoPendienteReal(
+                        codigo = "PED-2024-001",
+                        cliente = "Juan Carlos Perez Lopez",
+                        productos = "2 productos(s)",
+                        tipoEntrega = "\uD83D\uDE9A Domicilio",
+                        total = "$53.00",
+                        estado = "Preparando",
+                        colorEstado = FerreAmarillo
+                    )
+                }
 
                 //Pedido de prueba 2 - pendiente
-                CardPedidoPendienteReal(
-                    codigo = "PED-2026-002",
-                    cliente = "Maria Elena Torres Ruiz",
-                    productos = "1 producto(s)",
-                    tipoEntrega = "\uD83C\uDFEA Local",
-                    total = "$42.50",
-                    estado = "Confirmado",
-                    colorEstado = Color(0xFFBFDBFE),
-                    colorTextoEstado = Color(0xFF1E40AF)
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { viewModel.cambiarPantalla(SubPantallaAdmin.DETALLE_PEDIDO) }
+                ) {            
+                    CardPedidoPendienteReal(
+                        codigo = "PED-2024-002",
+                        cliente = "Maria Elena Torres Ruiz",
+                        productos = "1 producto(s)",
+                        tipoEntrega = "\uD83C\uDFEA Local",
+                        total = "$42.50",
+                        estado = "Confirmado",
+                        colorEstado = Color(0xFFBFDBFE),
+                        colorTextoEstado = Color(0xFF1E40AF)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(4.dp))
                 HorizontalDivider(color = Color.Gray, thickness = 1.dp)
@@ -942,7 +956,7 @@ fun ComponenteGestionPedidos(
 
 //Componente de pedido pendiente
 @Composable
-fun CardPedidoPendienteReal(codigo: String, cliente: String, productos: String, tipoEntrega: String, total: String, estado: String, colorEstado: Color, colorTextoEstado: Color = FerreGrisOscuro) {
+fun CardPedidoPendienteReal(codigo: String, cliente: String, productos: String, tipoEntrega: String, total: String, estado: String, colorEstado: Color, colorTextoEstado: Color = FerreGrisOscuro, modifier: Modifier = Modifier) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDF5)),
@@ -992,8 +1006,223 @@ fun CardPedidoHistoriaReal(codigo: String, cliente: String, fecha: String, estad
     }
 }
 
+//6.- Subpantalla : detalle de pedidos
+@Composable
+fun ComponenteDetallePedido(
+    viewModel: AdminViewModel,
+    onFlechaRegresar: () -> Unit
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(FerreBlanco)
+    ) {
+        //Encabezado muestra el pedido y el estado
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(FerreGrisOscuro)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .clickable { onFlechaRegresar() }
+            ) {
+                Text(text = "←", color = FerreBlanco, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            }
+            Text(
+                text = "PED-2024-001",
+                color = FerreBlanco,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            //Estado del pedido en encabezado
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .background(viewModel.colorEstadoSimulado, RoundedCornerShape(12.dp))
+                    .padding(horizontal = 12.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text = viewModel.estadoPedidoSimulado,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = viewModel.colorTextoEstadoSimulado
+                )
+            }
+        }
+
+        //Resumen de los pedidos
+        androidx.compose.foundation.rememberScrollState().let { scrollState ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                //Apartado de datos del cliente
+                Text(text = "DATOS DEL CLIENTE", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Gray, letterSpacing = 0.5.sp)
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "Juan Carlos Perez Lopez",
+                            fontWeight = FontWeight.Black,
+                            fontSize = 16.sp,
+                            color = FerreGrisOscuro
+                        )
+                        Text(
+                            text = "CI/RUC: 1712345678",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = FerreGrisOscuro
+                        )
+                        Text(text = "juan@email.com", fontSize = 13.sp, color = Color.Gray)
+                        Text(text = "099124567", fontSize = 13.sp, color = Color.Gray)
+                        Text(
+                            text = "Av. Principal 126, Paccha",
+                            fontSize = 13.sp,
+                            color = Color.Gray
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "\uD83D\uDE9A Entrega a domicilio  •  30-jun, 10:29 a.m.",
+                            fontSize = 12.sp,
+                            color = Color.LightGray
+                        )
+                    }
+
+                    //Productos del pedido
+                    Text(
+                        text = "PRODUCTOS DEL PEDIDO",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Gray,
+                        letterSpacing = 0.5.sp
+                    )
+
+                    //Producto de muestra 1
+                    CardProductoPedidoReal(
+                        nombre = "Martillo Carpintero 16oz",
+                        detalles = "Stanley · Unidad",
+                        cantidad = "Cant: 2",
+                        precio = "$25.00"
+                    )
+
+                    //Producto de muestra 2
+                    CardProductoPedidoReal(
+                        nombre = "Pintura Latex Blanca",
+                        detalles = "Condor · Galón",
+                        cantidad = "Cant: 1",
+                        precio = "$28.00"
+                    )
+
+                    //Cuadro para total del pedido
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(FerreGrisOscuro, RoundedCornerShape(14.dp))
+                            .padding(horizontal = 10.dp, vertical = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "TOTAL DEL PEDIDO", color = FerreBlanco, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        Text(text = "$53.00", color = FerreAmarillo, fontWeight = FontWeight.Black, fontSize = 20.sp)
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    //Boton para cambiar estado
+                    Button(
+                        onClick = { viewModel.avanzarEstadoPedido(context) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(text = viewModel.textoBotonEstado, color = FerreBlanco, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    }
+
+                    //Boton para exportar pdf
+                    OutlinedButton(
+                        onClick = { android.widget.Toast.makeText(context, "\uD83D\uDCC4 Generando documento PDF...", android.widget.Toast.LENGTH_SHORT).show() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = FerreGrisOscuro),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                            Text(text = "\uD83D\uDCC4", fontSize = 14.sp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = "Exportar como PDF", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 
+//Complemento tarjetas para el detalle de los pedidos
+@Composable
+fun CardProductoPedidoReal(nombre: String, detalles: String, cantidad: String, precio: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            //Simulador de imagen para la tarjeta
+            Box(
+                modifier = Modifier
+                    .size(54.dp)
+                    .background(Color(0xFFE2E8F0), RoundedCornerShape(10.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = "\uD83D\uDCE6", fontSize = 20.sp)
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1.4f)) {
+                Text(text = nombre, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = FerreGrisOscuro)
+                Text(text = detalles, fontSize = 12.sp, color = Color.Gray)
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(text = cantidad, fontSize = 13.sp, fontWeight = FontWeight. Bold, color = Color.Gray)
+            }
+            Text(
+                text = precio,
+                fontWeight = FontWeight.Black,
+                fontSize = 15.sp,
+                color = FerreGrisOscuro,
+                modifier = Modifier.weight(0.6f),
+                textAlign = androidx.compose.ui.text.style.TextAlign.End
+            )
+        }
+    }
+}
+
+
+
+//----PREVIEWS---------
 @Preview(showBackground = true)
 @Composable
 fun PreviewAdvertenciaIndividual() {
@@ -1031,5 +1260,13 @@ fun PreviewComponenteCargarProducto() {
 fun PreviewComponenteGestionPedidos() {
     com.example.ferrepaccha.ui.theme.FerrePacchaTheme {
         ComponenteGestionPedidos(viewModel = AdminViewModel(), onFlechaRegresar = {})
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewComponenteGestionDetallePedido() {
+    com.example.ferrepaccha.ui.theme.FerrePacchaTheme {
+        ComponenteDetallePedido(viewModel = AdminViewModel(), onFlechaRegresar = {})
     }
 }
