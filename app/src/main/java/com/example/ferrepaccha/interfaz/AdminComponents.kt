@@ -1104,76 +1104,79 @@ fun ComponenteDetallePedido(
                             color = Color.LightGray
                         )
                     }
+                }
 
-                    //Productos del pedido
-                    Text(
-                        text = "PRODUCTOS DEL PEDIDO",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Gray,
-                        letterSpacing = 0.5.sp
-                    )
+                //Productos del pedido
+                Text(
+                    text = "PRODUCTOS DEL PEDIDO",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Gray,
+                    letterSpacing = 0.5.sp
+                )
 
-                    //Producto de muestra 1
-                    CardProductoPedidoReal(
-                        nombre = "Martillo Carpintero 16oz",
-                        detalles = "Stanley · Unidad",
-                        cantidad = "Cant: 2",
-                        precio = "$25.00"
-                    )
+                //Producto de muestra 1
+                CardProductoPedidoReal(
+                    nombre = "Martillo Carpintero 16oz",
+                    detalles = "Stanley · Unidad",
+                    cantidad = "Cant: 2",
+                    precio = "$25.00"
+                )
 
-                    //Producto de muestra 2
-                    CardProductoPedidoReal(
-                        nombre = "Pintura Latex Blanca",
-                        detalles = "Condor · Galón",
-                        cantidad = "Cant: 1",
-                        precio = "$28.00"
-                    )
+                //Producto de muestra 2
+                CardProductoPedidoReal(
+                    nombre = "Pintura Latex Blanca",
+                    detalles = "Condor · Galón",
+                    cantidad = "Cant: 1",
+                    precio = "$28.00"
+                )
 
-                    //Cuadro para total del pedido
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(FerreGrisOscuro, RoundedCornerShape(14.dp))
-                            .padding(horizontal = 10.dp, vertical = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(text = "TOTAL DEL PEDIDO", color = FerreBlanco, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                        Text(text = "$53.00", color = FerreAmarillo, fontWeight = FontWeight.Black, fontSize = 20.sp)
-                    }
+                //Cuadro para total del pedido
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(FerreGrisOscuro, RoundedCornerShape(14.dp))
+                        .padding(horizontal = 10.dp, vertical = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = "TOTAL DEL PEDIDO", color = FerreBlanco, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    Text(text = "$53.00", color = FerreAmarillo, fontWeight = FontWeight.Black, fontSize = 20.sp)
+                }
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                //Spacer(modifier = Modifier.height(1.dp))
 
-                    //Boton para cambiar estado
-                    Button(
-                        onClick = { viewModel.avanzarEstadoPedido(context) },
-                        modifier = Modifier
-                            .fillMaxWidth()
+                //Boton para cambiar estado
+                Button(
+                    onClick = { viewModel.avanzarEstadoPedido(context) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(text = viewModel.textoBotonEstado, color = FerreBlanco, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                }
+
+                //Spacer(modifier = Modifier.height(8.dp))
+
+                //Boton para exportar pdf
+                OutlinedButton(
+                    onClick = { android.widget.Toast.makeText(context, "\uD83D\uDCC4 Generando documento PDF...", android.widget.Toast.LENGTH_SHORT).show() },
+                    modifier = Modifier
+                        .fillMaxWidth()
                             .height(50.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(text = viewModel.textoBotonEstado, color = FerreBlanco, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    }
-
-                    //Boton para exportar pdf
-                    OutlinedButton(
-                        onClick = { android.widget.Toast.makeText(context, "\uD83D\uDCC4 Generando documento PDF...", android.widget.Toast.LENGTH_SHORT).show() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = FerreGrisOscuro),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                            Text(text = "\uD83D\uDCC4", fontSize = 14.sp)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = "Exportar como PDF", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        }
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = FerreGrisOscuro),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                        Text(text = "\uD83D\uDCC4", fontSize = 14.sp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = "Exportar como PDF", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     }
                 }
+                Spacer(modifier = Modifier.height(12.dp))
             }
         }
     }

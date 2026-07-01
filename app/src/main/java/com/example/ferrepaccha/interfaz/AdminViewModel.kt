@@ -59,7 +59,7 @@ class AdminViewModel : ViewModel() {
 
 
     //Estados para el detalle de los pedidos
-    var estadoPedidoSimulado by mutableStateOf("Peparando")
+    var estadoPedidoSimulado by mutableStateOf("Preparando")
     var textoBotonEstado by mutableStateOf("Actualizar estado → Pedido Listo")
     var colorEstadoSimulado by mutableStateOf(Color(0xFFFEF3C7))
     var colorTextoEstadoSimulado by mutableStateOf(Color(0xFFD97706))
