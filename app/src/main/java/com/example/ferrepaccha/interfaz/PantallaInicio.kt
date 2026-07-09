@@ -26,10 +26,15 @@ import com.example.ferrepaccha.ui.theme.FerreVerde
 
 
 @Composable
-fun PantallaInicio() {
+fun PantallaInicio(
+    onNavegarAlCatalogo: () -> Unit
+) {
     Scaffold(
         bottomBar = {
-            BarraNavegacionInferior(pantallaActual = "inicio")
+            BarraNavegacionInferior(
+                pantallaActual = "inicio",
+                onNavegarAlCatalogo = onNavegarAlCatalogo
+            )
         }
     ) { paddingValores ->
         Column(
@@ -191,12 +196,12 @@ fun PantallaInicio() {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    //Tarjeta de catalogo
+                    //Tarjeta de catalogo conectado
                     Card(
                         modifier = Modifier
                             .weight(1f)
                             .height(140.dp)
-                            .clickable { },
+                            .clickable { onNavegarAlCatalogo() },
                         shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(containerColor = FerreAmarillo)
                     ) {
@@ -262,7 +267,8 @@ fun PantallaInicio() {
 }
 
 @Composable
-fun BarraNavegacionInferior(pantallaActual: String) {
+fun BarraNavegacionInferior(pantallaActual: String, onNavegarAlCatalogo: () -> Unit
+) {
     // 4 Botones para navegacion
     val items = listOf(
         Triple("Inicio", "inicio", "🏠"),
@@ -280,10 +286,13 @@ fun BarraNavegacionInferior(pantallaActual: String) {
 
             NavigationBarItem(
                 selected = seleccionada,
-                onClick = { /*pendiente cofigurar cambio de color*/ },
-                icon = {
-                    Text(text = icono, fontSize = 22.sp)
+                onClick = {
+                    if (ruta == "catalogo") {
+                        onNavegarAlCatalogo()
+                    }
                 },
+                icon = {
+                    Text(text = icono, fontSize = 22.sp)},
                 label = {
                     Text(
                         text = nombre,
@@ -302,5 +311,5 @@ fun BarraNavegacionInferior(pantallaActual: String) {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PantallaInicioPeview() {
-    PantallaInicio()
+    PantallaInicio(onNavegarAlCatalogo = {})
 }

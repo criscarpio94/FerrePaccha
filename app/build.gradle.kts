@@ -78,7 +78,12 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-auth-ktx")
 
-    //libreria para almacenar y tomar fotografias
+    //libreria adicional de firebase (en el caso que a futuro se requiera)
     implementation("com.google.firebase:firebase-storage-ktx")
+
+    //librerias para conectar a internet y convertir JSON
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
 }
