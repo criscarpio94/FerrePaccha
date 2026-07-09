@@ -11,7 +11,7 @@ data class ProductoFirebase(
     val nombre: String = "",
     val marca: String = "",
     val descripcion: String = "",
-    val caegoria: String = "",
+    val categoria: String = "",
     val porcentajeIva: Double = 15.0,
     val medidaPrincipal: String = "",
     val precioPrincipal: Double = 0.0,
