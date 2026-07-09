@@ -78,4 +78,7 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-auth-ktx")
 
+    //libreria para almacenar y tomar fotografias
+    implementation("com.google.firebase:firebase-storage-ktx")
+
 }

@@ -18,6 +18,7 @@ data class ProductoFirebase(
     val tieneSubMedida: Boolean = false,
     val subMedida: SubMedidaModel? =  null,
     val emoji: String = "\uD83D\uDCE6",
+    val urlImagen: String = ""
 )
 
 //Sub medida de productos
