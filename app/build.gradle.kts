@@ -1,24 +1,28 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+
+    //Pluggin de servicios de google
+    id("com.google.gms.google-services")
 }
 
 android {
     namespace = "com.example.ferrepaccha"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.example.ferrepaccha"
         minSdk = 27
-        targetSdk = 36
+
+        //target sdk
+        targetSdk = 37
+
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
     }
 
     buildTypes {
@@ -66,4 +70,11 @@ dependencies {
 
     //Iconos
     implementation("androidx.compose.material:material-icons-extended:1.7.0")
+
+    //platafomra de firebase
+    implementation(platform("com.google.firebase:firebase-bom:33.1.1"))
+
+    //librerias base de datos y logins
+    implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-auth-ktx")
 }

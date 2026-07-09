@@ -2,6 +2,7 @@ package com.example.ferrepaccha.interfaz
 
 import android.R
 import android.graphics.Paint
+import android.widget.Space
 import androidx.collection.emptyLongSet
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,14 +29,18 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,6 +48,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
@@ -64,20 +70,35 @@ data class ProductoSimulado(
     val id: String,
     val codigo: String,
     val nombre: String,
-    val marcaMedida: String,
+    val marca: String,
+    val medida: String,
     val precio: String,
     val emoji: String,
-    val emojiCategoria: String
+    val categoriaNombre: String,
+    val emojiCategoria: String,
+    val descripcion: String
 )
 
 //Lista de productos de prueba para las tarjetas
 val listaProductosMuestra = listOf(
-    ProductoSimulado("1", "HER-001", "Martillo Carpintero 16oz", "Stanley - Unidad", "$12.50", "\uD83D\uDD28", "\uD83D\uDD27"),
-    ProductoSimulado("2", "HERR-002", "Taladro Percutor 700W", "Bosch - Unidad", "$89.99", "\uD83D\uDD0C", "\uD83D\uDD27"),
-    ProductoSimulado("3", "PIN-001", "Pintura Latex Blanca", "Condor - Galón", "$28.00", "\uD83C\uDFA8", "\uD83C\uDFA8"),
-    ProductoSimulado("4", "ELE-001", "Cable Eléctrico 12AWG", "Electrocable - Metro", "$1.80", "\uD83E\uDDF5", "⚡"),
-    ProductoSimulado("5", "HER-003", "Juego Destornilladores", "Stanley - 6 piezas", "$14.00", "\uD83E\uDE9B", "\uD83D\uDD27"),
-    ProductoSimulado("6", "CON-001", "Foco LED 12W", "Philips - Unidad", "$3.20", "\uD83D\uDCA1", "\uD83C\uDFD7\uFE0F")
+    ProductoSimulado(
+        "1", "HER-001", "Martillo Carpintero 16oz", "Stanley", "Unidad","$12.50", "\uD83D\uDD28","Herramientas", "\uD83D\uDD27",
+        "Martillo de carpintero 16oz con mango de fibra de vidrio antideslizante. Resistente a impactos, ideal para construcción y carpintería general."),
+    ProductoSimulado(
+        "2", "HERR-002", "Taladro Percutor 700W", "Bosch", "Unidad", "$89.99", "\uD83D\uDD0C","Herramientas", "\uD83D\uDD27",
+    "Taladro percutor de alta potencia con velocidad variable reversible. Perfecto para perforaciones exigentes en concreto, madera y metal."),
+    ProductoSimulado(
+        "3", "PIN-001", "Pintura Latex Blanca", "Condor", "Galón", "$28.00", "\uD83C\uDFA8","Pintura", "\uD83C\uDFA8",
+        "Pintura látex premium de alta cobertura y lavabilidad. Acabado mate ideal para interiores y exteriores con protección antihumedad."),
+    ProductoSimulado(
+        "4", "ELE-001", "Cable Eléctrico 12AWG", "Electrocable", "Metro", "$1.80", "\uD83E\uDDF5","Eléctrico", "⚡",
+        "Cable de cobre multifilar con aislamiento termoplástico retardante a la flama. Ideal para instalaciones eléctricas residenciales seguras."),
+    ProductoSimulado(
+        "5", "HER-003", "Juego Destornilladores", "Stanley", "6 piezas", "$14.00", "\uD83E\uDE9B","Herramientas", "\uD83D\uDD27",
+        "Set de destornilladores magnéticos profesionales con mangos ergonómicos acolchados. Alta resistencia al torque continuo."),
+    ProductoSimulado(
+        "6", "CON-001", "Foco LED 12W", "Philips", "Unidad", "$3.20", "\uD83D\uDCA1","Eléctrico", "\uD83C\uDFD7\uFE0F",
+        "Foco LED de alta eficiencia con luz blanca brillante. Ahorro de energía de hasta el 85% y una vida útil estimada de 15,000 horas.")
 )
 
 //Pantalla de Catalogo de productos
@@ -90,7 +111,11 @@ fun ComponenteCatalogoCliente(
     var textoBusqueda by remember { mutableStateOf("") }
     var categoriaSeleccionada by remember { mutableStateOf("Todos") }
     var cantidadCarritoSimulada by remember { mutableStateOf(0) }
-    val context = androidx.compose.ui.platform.LocalContext.current
+
+
+    //Estados para la vista detalle de producto
+    var mostrarDetalleBottomSheet by remember { mutableStateOf(false) }
+    var productoSeleccionadoDetalle by remember { mutableStateOf<ProductoSimulado?>(null) }
     
     Column(
         modifier = Modifier
@@ -172,7 +197,7 @@ fun ComponenteCatalogoCliente(
         ) {
             val categorias = listOf("Todos", "Herramientas", "Eléctrico", "Pintura", "Construcción", "Plomeria")
             categorias.forEach { cat ->
-                val esSeleccionado = (cat == "Todos" && categoriaSeleccionada == "Todos") || (cat.contains(categoriaSeleccionada) && categoriaSeleccionada != "Todos")
+                val esSeleccionado = cat == categoriaSeleccionada
 
                 Box(
                     modifier = Modifier
@@ -181,7 +206,7 @@ fun ComponenteCatalogoCliente(
                             RoundedCornerShape(20.dp)
                         )
                         .clickable{
-                            categoriaSeleccionada = if (cat == "Todos") "Todos" else cat.split(" ") [1]
+                            categoriaSeleccionada = cat
                         }
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
@@ -208,20 +233,186 @@ fun ComponenteCatalogoCliente(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             //Muestra la lista de acuerdo a la categoria seleccionada
-            val listaFiltrada = if (categoriaSeleccionada =="Todos") {
-                listaProductosMuestra
-            } else {
-                listaProductosMuestra.filter { it.codigo.startsWith(categoriaSeleccionada.substring(0, 3).uppercase()) }
+            val listaFiltrada = when (categoriaSeleccionada) {
+                "Herramientas" -> listaProductosMuestra.filter { it.codigo.startsWith("HER") }
+                "Eléctrico" -> listaProductosMuestra.filter { it.codigo.startsWith("ELE") || it.codigo.startsWith("CON") }
+                "Pintura" -> listaProductosMuestra.filter { it.codigo.startsWith("PIN") }
+                else -> listaProductosMuestra
             }
+
 
             items(listaFiltrada) { producto ->
                 CardProducto(
                     producto = producto,
+                    onCardClick = {
+                        productoSeleccionadoDetalle = producto
+                        mostrarDetalleBottomSheet = true
+                    },
                     onAgregarClick = { cantidad ->
                         cantidadCarritoSimulada += cantidad
                         onAgregarAlCarrito()
                     }
                 )
+            }
+        }
+    }
+
+    //Expancion de detalle producto al dar clic en tarjeta
+    if (mostrarDetalleBottomSheet && productoSeleccionadoDetalle != null) {
+        val prod = productoSeleccionadoDetalle!!
+        var cantidadDetalle by remember { mutableStateOf(0) }
+
+        val sheetState = rememberModalBottomSheetState(
+            skipPartiallyExpanded = true
+        )
+
+        ModalBottomSheet(
+            onDismissRequest = { mostrarDetalleBottomSheet = false },
+            sheetState = sheetState,
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            containerColor = FerreBlanco,
+            dragHandle = { BottomSheetDefaults.DragHandle(color = Color.LightGray) }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 32.dp)
+            ) {
+                //Apartado para imagen mas grande
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .background(FerreGrisFondoCard, RoundedCornerShape(20.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    //Etiqueta para categoria
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(12.dp)
+                            .background(FerreAmarillo, RoundedCornerShape(12.dp))
+                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = prod.emojiCategoria, fontSize = 12.sp)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = prod.categoriaNombre, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = FerreGrisOscuro)
+                    }
+
+                    //Bonton para cerrar el detalle de producto
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(12.dp)
+                            .size(28.dp)
+                            .background(Color(0x66000000), CircleShape)
+                            .clickable { mostrarDetalleBottomSheet = false },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = "X", color = FerreBlanco, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    //Representacion de imagen (temporal)
+                    Text(text = prod.emoji, fontSize = 72.sp)
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                //Titulo y precio
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Text(
+                        text = prod.nombre,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 20.sp,
+                        color = FerreGrisOscuro
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                //Fila para marca, medida y codigo
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = "Marca: ", fontSize = 12.sp, color = FerreGrisTextoEtiqueta)
+                    Text(text = prod.marca, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF334155))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(text = "Medida: ", fontSize = 12.sp, color = FerreGrisTextoEtiqueta)
+                    Text(text = prod.medida, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF334155))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(text = "Código: ", fontSize = 12.sp, color = FerreGrisTextoEtiqueta)
+                    Text(text = prod.codigo, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF334155))
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                //Descripcion del producto
+                Text(
+                    text = prod.descripcion,
+                    fontSize = 14.sp,
+                    color = Color(0xFF475569),
+                    lineHeight = 20.sp
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                //Controles de compra
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    //Seleccionador de cantidad
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .background(FerreBlanco, RoundedCornerShape(12.dp))
+                            .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
+                            .padding(horizontal = 6.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = "−",
+                            modifier = Modifier
+                                .padding(horizontal = 10.dp)
+                                .clickable { if (cantidadDetalle > 1) cantidadDetalle-- },
+                            fontWeight = FontWeight.Bold, fontSize = 16.sp
+                        )
+                        Text(
+                            text = cantidadDetalle.toString(),
+                            fontWeight = FontWeight.Bold, fontSize = 15.sp, modifier = Modifier.width(20.dp), textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = "＋",
+                            modifier = Modifier
+                                .padding(horizontal = 10.dp)
+                                .clickable { cantidadDetalle++ },
+                            fontWeight = FontWeight.Bold, fontSize = 14.sp
+                        )
+                    }
+                     //Boton de agregar al carrito
+                    Button(
+                        onClick = {
+                            cantidadCarritoSimulada += cantidadDetalle
+                            onAgregarAlCarrito()
+                            mostrarDetalleBottomSheet = false
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = FerreAmarillo),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text(text = "Agregar al Carrito", color = FerreGrisOscuro, fontWeight = FontWeight.Black, fontSize = 14.sp)
+                    }
+                }
             }
         }
     }
@@ -233,9 +424,11 @@ fun ComponenteCatalogoCliente(
 @Composable
 fun CardProducto(
     producto: ProductoSimulado,
+    onCardClick: () -> Unit,
     onAgregarClick: (Int) -> Unit
 ) {
-    var cantidad by remember { mutableStateOf(1) }
+    var cantidad by remember { mutableStateOf(0) }
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Card(
         modifier = Modifier
@@ -254,7 +447,8 @@ fun CardProducto(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(130.dp)
-                    .background(FerreGrisFondoCard, RoundedCornerShape(18.dp)),
+                    .background(FerreGrisFondoCard, RoundedCornerShape(18.dp))
+                    .clickable { onCardClick() },
                 contentAlignment = Alignment.Center
             ) {
                 //Codigo de producto en la izquierda de imagen
@@ -288,9 +482,13 @@ fun CardProducto(
 
             //Informacion
             Text(text = producto.nombre, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, color = FerreGrisOscuro, maxLines = 1)
-            Text(text = producto.marcaMedida, fontSize = 11.sp, color = FerreGrisTextoEtiqueta, maxLines = 1)
+            Text(text = "${producto.marca} - ${producto.medida}", fontSize = 11.sp, color = FerreGrisTextoEtiqueta, maxLines = 1)
 
             Spacer(modifier = Modifier.height(6.dp))
+
+            Text(text = producto.precio, fontWeight = FontWeight.Black, fontSize = 18.sp, color = FerreGrisOscuro)
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             //Controloes inferiores de tarjetas de productos
             Row(
@@ -329,8 +527,12 @@ fun CardProducto(
                 //Boton para agregar producto al carrito
                 Button(
                     onClick = {
-                        onAgregarClick(cantidad)
-                        cantidad = 1
+                        if (cantidad > 0) {
+                            onAgregarClick(cantidad)
+                            cantidad = 0
+                        } else {
+                            android.widget.Toast.makeText(context, "⚠\uFE0F Selecciona al menos 1 unidad", android.widget.Toast.LENGTH_SHORT).show()
+                        }
                     },
                     modifier = Modifier
                         .height(34.dp)
@@ -345,6 +547,7 @@ fun CardProducto(
         }
     }
 }
+
 
 
 
