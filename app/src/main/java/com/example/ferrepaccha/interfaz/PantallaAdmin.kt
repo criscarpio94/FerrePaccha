@@ -2,6 +2,7 @@ package com.example.ferrepaccha.interfaz
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.ferrepaccha.admin.SubPantallaDashboard
 import com.example.ferrepaccha.admin.TipoSubpantalla
 import com.example.ferrepaccha.ui.theme.FerrePacchaTheme
 
@@ -22,6 +23,12 @@ fun PantallaAdmin(
 
         TipoSubpantalla.DASHBOARD -> {
             //Llama a SubPantallaDashboard
+            SubPantallaDashboard(
+                nombreAdmin = viewModel.nombreAdministrador,
+                rolUsuario = viewModel.rolUsuarioActual,
+                onCerrarSesion = { viewModel.cerrarSesion() },
+                onNavegarA = { destino -> viewModel.cambiarPantalla(destino) }
+            )
         }
 
         TipoSubpantalla.GESTION_GERENTE -> {
