@@ -1,35 +1,45 @@
 package com.example.ferrepaccha.interfaz
 
+import android.content.Context
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.compose.ui.graphics.Color
-
-//Clase enum para las subpantallas que se desprenden de Administradores
-enum class SubPantallaAdmin {
-    ADVERTENCIA,
-    LOGIN,
-    DASHBOARD,
-    CARGAR_PRODUCTO,
-    GESTION_PEDIDOS,
-    DETALLE_PEDIDO
-}
+import androidx.lifecycle.viewModelScope
+import com.example.ferrepaccha.ImgBbRepository
+import com.example.ferrepaccha.admin.TipoSubpantalla
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
 
 class AdminViewModel : ViewModel() {
-    //NAVEGACION INTERTA EN APARTADO DE ADMINISTRADORES
-    var pantallaActual by mutableStateOf(SubPantallaAdmin.ADVERTENCIA)
-        private set
 
-    var nombreAdministrador by mutableStateOf("Christopher")
-        private set
+    //Instancias de seguridad y de base de datos
+    private val auth = FirebaseAuth.getInstance()
+    private val db = FirebaseFirestore.getInstance()
 
-    //ESTADO DEL FORMULARIO
+
+    //NAVEGACION INTERNA EN APARTADO DE ADMINISTRADORES
+    var pantallaActual by mutableStateOf(TipoSubpantalla.ADVERTENCIA)
+
+    var nombreAdministrador by mutableStateOf("") //SOPORTE, GERENTE O EMPLEADO
+
+
+    //Control para roles de Seguridad para Administrador Principal
+    var rolUsuarioActual by mutableStateOf("")
+
+
+    //ESTADO DEL FORMULARIO LOGIN
     var usuarioInput by mutableStateOf("")
     var contrasenaInput by mutableStateOf("")
     var contrasenaVisible by mutableStateOf(false)
     var mensajeError by mutableStateOf("")
+
+
 
     //FORMULARIO PARA CARGA DE PRODUCTOS
     var nombreProductoInput by mutableStateOf("")
@@ -41,17 +51,12 @@ class AdminViewModel : ViewModel() {
     var menuCategoriasExpandido by mutableStateOf(false)
     var descripcionProductoInput by mutableStateOf("")
 
-    //Funcion para limpiar la pantalla al guardar los productos nuevos
-    fun limpiarFormularioProducto() {
-        nombreProductoInput = ""
-        codigoProductoInput = ""
-        precioProductoInput = ""
-        marcaProductoInput = ""
-        medidaProductoInput = ""
-        categoriaProductoInput = ""
-        descripcionProductoInput = ""
-        menuCategoriasExpandido = false
-    }
+
+
+    //Para gestionar fotografias
+    var imagenSeleccionadaUri by mutableStateOf<Uri?>(null)
+    var estaSubiendoImagen by mutableStateOf(false)
+
 
     //Estados para apartado de atender pedidos
     var busquedaPedidoInput by mutableStateOf("")
@@ -64,7 +69,122 @@ class AdminViewModel : ViewModel() {
     var colorEstadoSimulado by mutableStateOf(Color(0xFFFEF3C7))
     var colorTextoEstadoSimulado by mutableStateOf(Color(0xFFD97706))
 
-    fun avanzarEstadoPedido(contex: android.content.Context) {
+
+    //Control de acceso y bloqueo
+    var intentosFallidos by mutableStateOf(0)
+    var estadoBloqueado by mutableStateOf(false)
+
+
+    //Variable de apoyo
+    var usuarioSeleccionadoParaEditar by mutableStateOf<Any?>(null)
+
+
+    //FUNCIONES PARA LA NAVEGACION
+    fun cambiarPantalla(nuevaPantalla: TipoSubpantalla) {
+        pantallaActual = nuevaPantalla
+        //Limpiar mensaje de error al continuar a la siguiente pantalla
+        if (nuevaPantalla == TipoSubpantalla.LOGIN) {
+            mensajeError = ""
+        }
+    }
+
+
+    //Login para acceder
+    fun procesarLogin() {
+        if (estadoBloqueado) {
+            mensajeError = "Acceso bloqueado por seguiridad. Demasiados intentos."
+            return
+        }
+        val correo = usuarioInput.trim()
+        val contrasena = contrasenaInput.trim()
+
+        if (correo.isEmpty() || contrasena.isEmpty()) {
+            mensajeError = "Por favor, llene todos los campos."
+            return
+        }
+
+        //Validacion de Firebase de forma encriptada
+        auth.signInWithEmailAndPassword(correo, contrasena)
+            .addOnSuccessListener { resultadoAuth ->
+                val uidUsuario = resultadoAuth.user?.uid
+
+                if (uidUsuario != null) {
+                    //Busqueda del rol que tiene ese usuario
+                    db.collection("usuarios")
+                        .document(uidUsuario)
+                        .get()
+                        .addOnSuccessListener { documento ->
+                            if (documento.exists()) {
+                                intentosFallidos = 0
+                                mensajeError = ""
+                                nombreAdministrador = documento.getString("nombre") ?: "Admin"
+                                rolUsuarioActual = documento.getString("rol") ?: "EMPLEADO"
+
+                                cambiarPantalla(TipoSubpantalla.DASHBOARD)
+                            } else {
+                                mensajeError = "El usuario existe pero no tiene perfil en la base de datos."
+                            }
+                        }
+                        .addOnFailureListener {
+                            mensajeError = "Error al leer los permisos del perfil."
+                        }
+                }
+            }
+            .addOnFailureListener {
+                intentosFallidos++
+                if (intentosFallidos >= 5) {
+                    estadoBloqueado = true
+                    mensajeError = "Área bloqueada. Supero los 5 intentos permitidos."
+                } else {
+                    mensajeError = "Correo o contraseña incorrectos ($intentosFallidos/5)"
+                }
+            }
+    }
+
+
+    //Funcion para limpiar la pantalla al guardar los productos nuevos
+    fun limpiarFormularioProducto() {
+        nombreProductoInput = ""
+        codigoProductoInput = ""
+        precioProductoInput = ""
+        marcaProductoInput = ""
+        medidaProductoInput = ""
+        categoriaProductoInput = ""
+        descripcionProductoInput = ""
+        imagenSeleccionadaUri = null
+        estaSubiendoImagen = false
+        menuCategoriasExpandido = false
+    }
+
+    //Funcion para guardar el producto al catalogo
+    fun guardarProductoAlCatalogo(context: Context) {
+        if (nombreProductoInput.isEmpty() || codigoProductoInput.isEmpty() || precioProductoInput.isEmpty()) {
+            android.widget.Toast.makeText(context, "Por favor, llene los campos obligatorios (*)", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        viewModelScope.launch {
+            var urlImagenFinal = ""
+
+            if (imagenSeleccionadaUri != null) {
+                estaSubiendoImagen = true
+                val urlSubida = ImgBbRepository.subirFotoAdmin(context, imagenSeleccionadaUri!!)
+                if (urlSubida != null) {
+                    urlImagenFinal = urlSubida
+                }
+                estaSubiendoImagen = false
+            }
+
+            //Mapeo e insertar a la coleccion de productosen Firebase Firestore
+            android.widget.Toast.makeText(context, "\uD83D\uDCE6 Producto guardado con exito en el catalogo", android.widget.Toast.LENGTH_SHORT).show()
+
+            limpiarFormularioProducto()
+            cambiarPantalla(TipoSubpantalla.DASHBOARD)
+        }
+    }
+
+    //Para estados de los pedidos
+    fun avanzarEstadoPedido(contex: Context) {
         if (estadoPedidoSimulado == "Preparando") {
             estadoPedidoSimulado = "Pedido Listo"
             textoBotonEstado = "Actualizar estado → Entregado"
@@ -80,53 +200,13 @@ class AdminViewModel : ViewModel() {
         }
     }
 
-
-    //INTENTOS DE INGRESO
-    var intentosFallidos by mutableStateOf(0)
-        private set
-    var estaBloqueado by mutableStateOf(false)
-        private set
-
-    //FUNCIONES PARA LA NAVEGACION
-    fun cambiarPantalla(nuevaPantalla: SubPantallaAdmin) {
-        pantallaActual = nuevaPantalla
-
-        //Limpiar mensaje de error al continuar a la siguiente pantalla
-        if (nuevaPantalla == SubPantallaAdmin.LOGIN) {
-            mensajeError = ""
-        }
-    }
-
-    //VALIDACION DE ACCESO
-    fun procesarLogin() {
-        if (estaBloqueado) {
-            mensajeError = "Acceso bloqueado por seguridad. Demasiados intentos."
-            return
-        }
-
-        //usuario y contraseña demostrativas, solo para muestra
-        if (usuarioInput == "admin" && contrasenaInput == "admin123") {
-            intentosFallidos = 0
-            mensajeError = ""
-
-            //Si se ingresa con admin se le asigna el nombre al encabezado
-            nombreAdministrador = "Christopher"
-            cambiarPantalla(SubPantallaAdmin.DASHBOARD)
-        } else {
-            intentosFallidos++
-            if (intentosFallidos >= 5) {
-                estaBloqueado = true
-                mensajeError = "Área bloqueda. Superó los 5 intentos permitidos."
-            } else {
-                mensajeError = "Credenciales incorrectas, Intento $intentosFallidos de 5."
-            }
-        }
-    }
-
+    //Cierre de sesion
     fun cerrarSesion() {
-        //Se reinicia las variables de sesion de forma segura
+        auth.signOut()
         usuarioInput = ""
         contrasenaInput = ""
-        cambiarPantalla(SubPantallaAdmin.ADVERTENCIA)
+        rolUsuarioActual = ""
+        nombreAdministrador = ""
+        cambiarPantalla(TipoSubpantalla.LOGIN)
     }
 }

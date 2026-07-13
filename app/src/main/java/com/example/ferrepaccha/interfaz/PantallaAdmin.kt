@@ -2,65 +2,49 @@ package com.example.ferrepaccha.interfaz
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.ferrepaccha.admin.TipoSubpantalla
 import com.example.ferrepaccha.ui.theme.FerrePacchaTheme
 
 @Composable
 fun PantallaAdmin(
-    viewModel: AdminViewModel = viewModel(),
-    onRegresarAlInicio: () -> Unit = {}
-) {
-    //Control para el estado del ViewModel
-    when (viewModel.pantallaActual) {
-        SubPantallaAdmin.ADVERTENCIA -> {
-            ComponenteAdvertencia(
-                onRegresar = onRegresarAlInicio,
-                onContinuar = { viewModel.cambiarPantalla(SubPantallaAdmin.LOGIN) }
-            )
+    viewModel: AdminViewModel) {
+    //Para monitorear las supantallas que se reciben de ViewModel
+    val subPantallaActual = viewModel.pantallaActual
+
+    when (subPantallaActual) {
+        TipoSubpantalla.ADVERTENCIA -> {
+            //llama a SubPantallaAdvertencia
         }
 
-        SubPantallaAdmin.LOGIN -> {
-            ComponenteLogin(
-                viewModel = viewModel,
-                onFlechaRegresar = { viewModel.cambiarPantalla(SubPantallaAdmin.ADVERTENCIA) }
-            )
+        TipoSubpantalla.LOGIN -> {
+            //Llama a SubPantallaLogin
         }
 
-        SubPantallaAdmin.DASHBOARD -> {
-            //Pendiente completar
-            ComponenteDashboard(viewModel = viewModel)
+        TipoSubpantalla.DASHBOARD -> {
+            //Llama a SubPantallaDashboard
         }
 
-        SubPantallaAdmin.CARGAR_PRODUCTO -> {
-            //Pendiente completar
-            ComponenteCargarProducto(
-                viewModel = viewModel,
-                onFlechaRegresar = { viewModel.cambiarPantalla(SubPantallaAdmin.DASHBOARD) }
-            )
+        TipoSubpantalla.GESTION_GERENTE -> {
+            //Llama a SubPantallaGestionUsuarios para gestionar al GERENTE
         }
 
-        SubPantallaAdmin.GESTION_PEDIDOS -> {
-            //Pendiente completar
-            ComponenteGestionPedidos(
-                viewModel = viewModel,
-                onFlechaRegresar = { viewModel.cambiarPantalla(SubPantallaAdmin.DASHBOARD) }
-            )
+        TipoSubpantalla.GESTION_EMPLEADOS -> {
+            //Llama a SubPantallaGestionEmpleados para gestionar a los EMPLEADOS
         }
 
-        SubPantallaAdmin.DETALLE_PEDIDO -> {
-            //Pendiente completar
-            ComponenteDetallePedido(
-                viewModel = viewModel,
-                onFlechaRegresar = { viewModel.cambiarPantalla(SubPantallaAdmin.GESTION_PEDIDOS) }
-            )
+        TipoSubpantalla.FORMULARIO_USUARIO -> {
+            //Llama a SubPantallaFormularioUsuario
         }
+
+        TipoSubpantalla.GESTION_PRODUCTOS -> {
+            //Llama a SubPantallaGestoinProductos
+        }
+
+        TipoSubpantalla.DETALLE_PEDIDO -> {
+            //Llama a SubPantallaDetallePedido
+        }
+
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun PantallaAdminPreview() {
-    FerrePacchaTheme {
-        PantallaAdmin()
-    }
-}
+

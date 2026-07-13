@@ -1,3 +1,4 @@
+/*
 package com.example.ferrepaccha.interfaz
 
 import android.R
@@ -63,6 +64,7 @@ import com.example.ferrepaccha.ui.theme.FerreGrisClaro
 import com.example.ferrepaccha.ui.theme.FerreGrisOscuro
 import kotlin.math.sin
 
+
 //1.- Subpantalla: Advertencia
 @Composable
 fun ComponenteAdvertencia(
@@ -111,7 +113,7 @@ fun ComponenteAdvertencia(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "Si ud no es un administrador, por favor regrese al inicio.",
+            text = "Si ustedd no es un administrador, por favor regrese al inicio.",
             fontSize = 14.sp,
             color = Color.LightGray,
             textAlign = TextAlign.Center,
@@ -231,7 +233,7 @@ fun ComponenteLogin(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
                     singleLine = true,
-                    enabled = !viewModel.estaBloqueado
+                    enabled = !viewModel.estadoBloqueado
                 )
             }
 
@@ -250,11 +252,11 @@ fun ComponenteLogin(
                 OutlinedTextField(
                     value = viewModel.contrasenaInput,
                     onValueChange = { viewModel.contrasenaInput = it },
-                    placeholder = {  Text(text = "••••••••", color = Color.LightGray) },
+                    placeholder = {  Text(text = "•••", color = Color.LightGray) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
                     singleLine = true,
-                    enabled = !viewModel.estaBloqueado,
+                    enabled = !viewModel.estadoBloqueado,
                     visualTransformation = if (viewModel.contrasenaVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = { viewModel.contrasenaVisible = !viewModel.contrasenaVisible }) {
@@ -270,7 +272,7 @@ fun ComponenteLogin(
                 Text(
                     text = viewModel.mensajeError,
                     color = Color.Red,
-                    fontSize = 31.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center
                 )
@@ -286,7 +288,7 @@ fun ComponenteLogin(
                     .height(54.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = FerreAmarillo),
                 shape = RoundedCornerShape(14.dp),
-                enabled = !viewModel.estaBloqueado
+                enabled = !viewModel.estadoBloqueado
             ) {
                 Text(
                     text = "Ingresar",
@@ -313,24 +315,28 @@ fun ComponenteLogin(
 //3.- Subpantalla Dashboard principal
 @Composable
 fun ComponenteDashboard(
-    viewModel: AdminViewModel
+    viewModel: AdminViewModel,
+    onCerrarSesion: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(FerreBlanco)
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        //Encabezado
+        //Encabezado incluye rol de Firebase
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(FerreGrisOscuro)
-                .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 20.dp)
+                .padding(vertical = 8.dp)
+
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Text(
+                text = "Bienvenido ${viewModel.nombreAdministrador}",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Black,
+                color = FerreGrisOscuro
+
             ) {
                 Column {
                     Text(
@@ -359,7 +365,9 @@ fun ComponenteDashboard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = {/* mostrara notificaciones */}) {
+                    IconButton(onClick = {
+ mostrara notificaciones
+}) {
                         Text(text = "\uD83D\uDD14", fontSize = 22.sp)
                     }
                     IconButton(onClick = { viewModel.cerrarSesion() }) {
@@ -1273,3 +1281,4 @@ fun PreviewComponenteGestionDetallePedido() {
         ComponenteDetallePedido(viewModel = AdminViewModel(), onFlechaRegresar = {})
     }
 }
+*/
