@@ -6,7 +6,7 @@ import kotlinx.coroutines.tasks.await
 class ProductoRepositorio {
     //Intancia de Firestore
     private val db = FirebaseFirestore.getInstance()
-    private val productosColeccion = db.collection("productos")
+    private val productosColeccion = db.collection("com/example/ferrepaccha/admin/productos")
 
     //Obtener la lista de productos desde la nube en tiempo real
 

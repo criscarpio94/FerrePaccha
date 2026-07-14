@@ -274,7 +274,7 @@ fun BarraNavegacionInferior(pantallaActual: String, onNavegarAlCatalogo: () -> U
         Triple("Inicio", "inicio", "🏠"),
         Triple("Catálogo", "catalogo", "📖"),
         Triple("Carrito", "carrito", "🛒"),
-        Triple("Pedidos", "pedidos", "📋")
+        Triple("Pedidos", "com/example/ferrepaccha/admin/pedidos", "📋")
     )
 
     NavigationBar(
