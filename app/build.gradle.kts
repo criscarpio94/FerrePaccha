@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
 
     //Pluggin de servicios de google
     id("com.google.gms.google-services")
@@ -87,5 +88,10 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.5")
+
+    //Room - persistencia local del carrito
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
 }
