@@ -64,7 +64,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.ferrepaccha.data.model.ProductoFirebase
-import com.example.ferrepaccha.navigation.AccesoAdmin
 import com.example.ferrepaccha.ui.theme.FerreAmarillo
 import com.example.ferrepaccha.ui.theme.FerreBlanco
 import com.example.ferrepaccha.ui.theme.FerreGrisClaro
@@ -153,11 +152,12 @@ fun CatalogoPantalla(
         OutlinedTextField(
             value = textoBusqueda,
             onValueChange = { nuevoTexto ->
-                if (nuevoTexto.trim() == AccesoAdmin.CODIGO_MAESTRO) {
-                    textoBusqueda = ""
-                    onNavegarAAdmin()
-                } else {
-                    textoBusqueda = nuevoTexto
+                textoBusqueda = nuevoTexto
+                productViewModel.verificarCodigoMaestro(nuevoTexto.trim()) { esCodigoMaestro ->
+                    if (esCodigoMaestro) {
+                        textoBusqueda = ""
+                        onNavegarAAdmin()
+                    }
                 }
             },
             modifier = Modifier

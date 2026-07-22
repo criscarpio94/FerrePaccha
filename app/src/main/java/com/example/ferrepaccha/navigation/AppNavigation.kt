@@ -35,13 +35,13 @@ fun AppNavigation() {
                 },
                 onAgregarAlCarrito = { },
                 onNavegarAAdmin = {
-                    navController.navigate("admin")
+                    navController.navigate("login_admin")
                 },
                 productViewModel = productoViewModel
             )
         }
 
-        composable("admin") {
+        composable("login_admin") {
             val adminViewModel: AdminViewModel = viewModel()
             PantallaAdmin(
                 viewModel = adminViewModel,

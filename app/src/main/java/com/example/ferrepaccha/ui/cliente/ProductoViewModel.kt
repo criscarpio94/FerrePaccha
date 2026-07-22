@@ -3,6 +3,7 @@ package com.example.ferrepaccha.ui.cliente
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ferrepaccha.data.model.ProductoFirebase
+import com.example.ferrepaccha.data.repository.AccesoRepositorio
 import com.example.ferrepaccha.data.repository.ProductoRepositorio
 import com.example.ferrepaccha.network.ImgBbRepository
 import com.google.firebase.firestore.FirebaseFirestore
@@ -14,7 +15,10 @@ import kotlinx.coroutines.tasks.await
 class ProductoViewModel : ViewModel() {
 
     private val repositorio = ProductoRepositorio()
+    private val accesoRepositorio = AccesoRepositorio()
     private val db = FirebaseFirestore.getInstance()
+
+    private var codigoMaestroCache: String? = null
 
     private val _listaProductos = MutableStateFlow<List<ProductoFirebase>>(emptyList())
     val listaProductos: StateFlow<List<ProductoFirebase>> = _listaProductos
@@ -24,6 +28,33 @@ class ProductoViewModel : ViewModel() {
 
     init {
         escucharProductosDelCatalogo()
+        precargarCodigoMaestro()
+    }
+
+    private fun precargarCodigoMaestro() {
+        viewModelScope.launch {
+            codigoMaestroCache = accesoRepositorio.obtenerCodigoMaestro()
+        }
+    }
+
+    fun verificarCodigoMaestro(textoIngresado: String, onResultado: (Boolean) -> Unit) {
+        if (textoIngresado.isEmpty()) {
+            onResultado(false)
+            return
+        }
+
+        val codigoCacheado = codigoMaestroCache
+        if (codigoCacheado != null) {
+            onResultado(textoIngresado == codigoCacheado)
+            return
+        }
+
+        viewModelScope.launch {
+            val codigoMaestro = accesoRepositorio.obtenerCodigoMaestro().also {
+                codigoMaestroCache = it
+            }
+            onResultado(codigoMaestro != null && textoIngresado == codigoMaestro)
+        }
     }
 
     fun escucharProductosDelCatalogo() {
