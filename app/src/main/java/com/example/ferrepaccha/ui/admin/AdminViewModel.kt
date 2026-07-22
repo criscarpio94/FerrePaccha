@@ -14,7 +14,7 @@ class AdminViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
 
-    var pantallaActual by mutableStateOf(TipoSubpantalla.ADVERTENCIA)
+    var pantallaActual by mutableStateOf(TipoSubpantalla.LOGIN)
     var nombreAdministrador by mutableStateOf("")
     var rolUsuarioActual by mutableStateOf("")
 

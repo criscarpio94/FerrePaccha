@@ -34,6 +34,9 @@ fun AppNavigation() {
                     navController.popBackStack()
                 },
                 onAgregarAlCarrito = { },
+                onNavegarAAdmin = {
+                    navController.navigate("admin")
+                },
                 productViewModel = productoViewModel
             )
         }
@@ -42,7 +45,10 @@ fun AppNavigation() {
             val adminViewModel: AdminViewModel = viewModel()
             PantallaAdmin(
                 viewModel = adminViewModel,
-                productoViewModel = productoViewModel
+                productoViewModel = productoViewModel,
+                onRegresarAlCatalogo = {
+                    navController.popBackStack()
+                }
             )
         }
     }

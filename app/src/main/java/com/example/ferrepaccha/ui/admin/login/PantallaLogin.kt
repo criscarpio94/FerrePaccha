@@ -113,7 +113,11 @@ fun PantallaLogin(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
                     singleLine = true,
-                    enabled = !viewModel.estadoBloqueado
+                    enabled = !viewModel.estadoBloqueado,
+                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    )
                 )
             }
 
@@ -136,6 +140,10 @@ fun PantallaLogin(
                     shape = RoundedCornerShape(14.dp),
                     singleLine = true,
                     enabled = !viewModel.estadoBloqueado,
+                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
                     visualTransformation = if (viewModel.contrasenaVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = { viewModel.contrasenaVisible = !viewModel.contrasenaVisible }) {

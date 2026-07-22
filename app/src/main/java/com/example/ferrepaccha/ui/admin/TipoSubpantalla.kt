@@ -1,7 +1,6 @@
 package com.example.ferrepaccha.ui.admin
 
 enum class TipoSubpantalla {
-    ADVERTENCIA,
     LOGIN,
     DASHBOARD,
     GESTION_GERENTE,

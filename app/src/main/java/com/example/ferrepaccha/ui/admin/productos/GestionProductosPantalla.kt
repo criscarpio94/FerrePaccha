@@ -137,7 +137,10 @@ fun TarjetaProductoItem(
                         .background(Color(0xFFF1F5F9), shape = RoundedCornerShape(10.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = producto.emoji.ifEmpty { "🛠️" }, fontSize = 20.sp)
+                    Text(
+                        text = if (producto.urlImagen.isNotBlank()) "🖼️" else "\uD83D\uDEE0\uFE0F",
+                        fontSize = 20.sp
+                    )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {

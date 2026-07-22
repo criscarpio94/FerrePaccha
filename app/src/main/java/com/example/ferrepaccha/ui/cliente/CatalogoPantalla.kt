@@ -50,25 +50,46 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.ferrepaccha.data.model.ProductoFirebase
+import com.example.ferrepaccha.navigation.AccesoAdmin
 import com.example.ferrepaccha.ui.theme.FerreAmarillo
 import com.example.ferrepaccha.ui.theme.FerreBlanco
 import com.example.ferrepaccha.ui.theme.FerreGrisClaro
 import com.example.ferrepaccha.ui.theme.FerreGrisOscuro
+
+private const val EMOJI_IMAGEN_POR_DEFECTO = "\uD83D\uDEE0\uFE0F"
+
+private fun textoMarcaMedidas(producto: ProductoFirebase): String {
+    return buildString {
+        append(producto.marca.ifBlank { "Sin marca" })
+        append(" · ")
+        append(producto.medidaPrincipal.ifBlank { "Unidad" })
+        if (producto.tieneSubMedida && producto.subMedida != null) {
+            append(" · ")
+            append(producto.subMedida.nombreSubMedida)
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatalogoPantalla(
     onFlechaRegresar: () -> Unit,
     onAgregarAlCarrito: () -> Unit,
+    onNavegarAAdmin: () -> Unit,
     productViewModel: ProductoViewModel
 ) {
     var textoBusqueda by remember { mutableStateOf("") }
@@ -128,10 +149,17 @@ fun CatalogoPantalla(
                 }
             }
         }
-
+        //BARRA DE BUSQUEDA
         OutlinedTextField(
             value = textoBusqueda,
-            onValueChange = { textoBusqueda = it },
+            onValueChange = { nuevoTexto ->
+                if (nuevoTexto.trim() == AccesoAdmin.CODIGO_MAESTRO) {
+                    textoBusqueda = ""
+                    onNavegarAAdmin()
+                } else {
+                    textoBusqueda = nuevoTexto
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -144,7 +172,8 @@ fun CatalogoPantalla(
                 unfocusedContainerColor = Color.Transparent,
                 disabledContainerColor = Color.Transparent,
                 focusedIndicatorColor = FerreAmarillo,
-                unfocusedIndicatorColor = Color(0xFFCBD5E1)
+                unfocusedIndicatorColor = Color(0xFFCBD5E1),
+                focusedTextColor = Color.Black
             )
         )
 
@@ -155,7 +184,10 @@ fun CatalogoPantalla(
                 .padding(horizontal = 16.dp, vertical = 2.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            val categorias = listOf("Todos", "General", "Herramientas", "Pintura", "Tubería", "Hierro", "Madera", "Eléctrico", "Construcción", "Acabados")
+            val categorias = listOf(
+                "Todos", "General", "Herramientas", "Pintura", "Tubería",
+                "Hierro", "Madera", "Eléctrico", "Construcción", "Acabados"
+            )
             categorias.forEach { cat ->
                 val esSeleccionado = cat == categoriaSeleccionada
 
@@ -189,7 +221,8 @@ fun CatalogoPantalla(
                 val cumpleFiltroTexto = prod.nombre.contains(textoBusqueda, ignoreCase = true) ||
                         prod.marca.contains(textoBusqueda, ignoreCase = true) ||
                         prod.codigoProducto.contains(textoBusqueda, ignoreCase = true)
-                val cumpleFiltroCategoria = if (categoriaSeleccionada == "Todos") true else prod.categoria == categoriaSeleccionada
+                val cumpleFiltroCategoria =
+                    if (categoriaSeleccionada == "Todos") true else prod.categoria == categoriaSeleccionada
 
                 cumpleFiltroTexto && cumpleFiltroCategoria
             }
@@ -222,9 +255,23 @@ fun CatalogoPantalla(
 
     if (mostrarDetalleBottomSheet && productoSeleccionadoDetalle != null) {
         val prod = productoSeleccionadoDetalle!!
-        var cantidadDetalle by remember { mutableStateOf(0) }
+        var cantidadDetalle by remember(prod.id) { mutableStateOf(0) }
+        var medidaSeleccionada by remember(prod.id) { mutableStateOf("principal") }
+
+        val precioSeleccionado = if (prod.tieneSubMedida && medidaSeleccionada == "sub" && prod.subMedida != null) {
+            prod.subMedida.precioSubMedida
+        } else {
+            prod.precioPrincipal
+        }
+
+        val etiquetaMedidaSeleccionada = if (prod.tieneSubMedida && medidaSeleccionada == "sub" && prod.subMedida != null) {
+            prod.subMedida.nombreSubMedida
+        } else {
+            prod.medidaPrincipal
+        }
 
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val context = LocalContext.current
 
         ModalBottomSheet(
             onDismissRequest = { mostrarDetalleBottomSheet = false },
@@ -240,47 +287,48 @@ fun CatalogoPantalla(
                     .padding(horizontal = 20.dp)
                     .padding(bottom = 32.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .background(FerreGrisClaro, RoundedCornerShape(20.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(12.dp)
-                            .background(FerreAmarillo, RoundedCornerShape(12.dp))
-                            .padding(horizontal = 10.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(text = "\uD83D\uDCE6", fontSize = 12.sp)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = prod.categoria, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = FerreGrisOscuro)
+                ZonaImagenProducto(
+                    urlImagen = prod.urlImagen,
+                    nombre = prod.nombre,
+                    altura = 200.dp,
+                    emojiFontSize = 72.sp,
+                    esquinas = 20.dp,
+                    badgeIzquierdo = {
+                        Row(
+                            modifier = Modifier
+                                .background(FerreAmarillo, RoundedCornerShape(12.dp))
+                                .padding(horizontal = 10.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = prod.categoria,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp,
+                                color = FerreGrisOscuro
+                            )
+                        }
+                    },
+                    badgeDerecho = {
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .background(Color(0x66000000), CircleShape)
+                                .clickable { mostrarDetalleBottomSheet = false },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = "X", color = FerreBlanco, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
-
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(12.dp)
-                            .size(28.dp)
-                            .background(Color(0x66000000), CircleShape)
-                            .clickable { mostrarDetalleBottomSheet = false },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = "X", color = FerreBlanco, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    }
-
-                    if (prod.urlImagen.isNotEmpty()) {
-                        AsyncImage(model = prod.urlImagen, contentDescription = prod.nombre, modifier = Modifier.size(140.dp))
-                    } else {
-                        Text(text = prod.emoji, fontSize = 72.sp)
-                    }
-                }
+                )
 
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(text = prod.nombre, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, color = FerreGrisOscuro)
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = textoMarcaMedidas(prod),
+                    fontSize = 13.sp,
+                    color = Color.Gray
+                )
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
@@ -288,17 +336,49 @@ fun CatalogoPantalla(
                     horizontalArrangement = Arrangement.Start,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "Marca: ", fontSize = 12.sp, color = Color.Gray)
-                    Text(text = prod.marca, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF334155))
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(text = "Medida: ", fontSize = 12.sp, color = Color.Gray)
-                    Text(text = prod.medidaPrincipal, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF334155))
-                    Spacer(modifier = Modifier.width(12.dp))
                     Text(text = "Código: ", fontSize = 12.sp, color = Color.Gray)
-                    Text(text = prod.codigoProducto, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF334155))
+                    Text(
+                        text = prod.codigoProducto,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF334155)
+                    )
                 }
+
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(text = prod.descripcion, fontSize = 14.sp, color = Color(0xFF475569), lineHeight = 20.sp)
+                Spacer(modifier = Modifier.height(20.dp))
+
+                if (prod.tieneSubMedida && prod.subMedida != null) {
+                    Text(
+                        text = "Selecciona cómo deseas comprarlo:",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = FerreGrisOscuro
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    SelectorMedidaVenta(
+                        producto = prod,
+                        medidaSeleccionada = medidaSeleccionada,
+                        onMedidaSeleccionada = { medidaSeleccionada = it }
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                Text(
+                    text = "$${String.format("%.2f", precioSeleccionado)}",
+                    fontWeight = FontWeight.Black,
+                    fontSize = 28.sp,
+                    color = FerreGrisOscuro
+                )
+                Text(
+                    text = "Precio por ${etiquetaMedidaSeleccionada.lowercase()}",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Row(
@@ -318,24 +398,35 @@ fun CatalogoPantalla(
                             modifier = Modifier
                                 .padding(horizontal = 18.dp)
                                 .clickable { if (cantidadDetalle > 1) cantidadDetalle-- },
-                            fontWeight = FontWeight.Bold, fontSize = 16.sp
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
                         )
                         Text(
                             text = cantidadDetalle.toString(),
-                            fontWeight = FontWeight.Bold, fontSize = 15.sp, modifier = Modifier.width(20.dp), textAlign = TextAlign.Center
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            modifier = Modifier.width(20.dp),
+                            textAlign = TextAlign.Center
                         )
                         Text(
                             text = "＋",
                             modifier = Modifier
                                 .padding(horizontal = 10.dp)
                                 .clickable { cantidadDetalle++ },
-                            fontWeight = FontWeight.Bold, fontSize = 14.sp
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
                         )
                     }
+
                     Button(
                         onClick = {
                             cantidadCarritoSimulada += cantidadDetalle
                             onAgregarAlCarrito()
+                            Toast.makeText(
+                                context,
+                                "✅ $cantidadDetalle x ${prod.nombre} ($etiquetaMedidaSeleccionada)",
+                                Toast.LENGTH_SHORT
+                            ).show()
                             mostrarDetalleBottomSheet = false
                         },
                         modifier = Modifier
@@ -344,8 +435,128 @@ fun CatalogoPantalla(
                         colors = ButtonDefaults.buttonColors(containerColor = FerreAmarillo),
                         shape = RoundedCornerShape(14.dp)
                     ) {
-                        Text(text = "Agregar al Carrito", color = FerreGrisOscuro, fontWeight = FontWeight.Black, fontSize = 14.sp)
+                        Text(
+                            text = "Agregar al Carrito",
+                            color = FerreGrisOscuro,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 14.sp
+                        )
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ZonaImagenProducto(
+    urlImagen: String,
+    nombre: String,
+    altura: Dp,
+    emojiFontSize: TextUnit,
+    esquinas: Dp = 18.dp,
+    badgeIzquierdo: @Composable () -> Unit = {},
+    badgeDerecho: @Composable () -> Unit = {}
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(altura)
+            .clip(RoundedCornerShape(esquinas))
+            .background(FerreGrisClaro)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            badgeIzquierdo()
+            badgeDerecho()
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(horizontal = 12.dp, vertical = 4.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            if (urlImagen.isNotBlank()) {
+                AsyncImage(
+                    model = urlImagen,
+                    contentDescription = nombre,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit
+                )
+            } else {
+                Text(text = EMOJI_IMAGEN_POR_DEFECTO, fontSize = emojiFontSize)
+            }
+        }
+    }
+}
+
+@Composable
+fun SelectorMedidaVenta(
+    producto: ProductoFirebase,
+    medidaSeleccionada: String,
+    onMedidaSeleccionada: (String) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .background(
+                    if (medidaSeleccionada == "principal") FerreAmarillo else Color(0xFFF1F5F9),
+                    RoundedCornerShape(12.dp)
+                )
+                .clickable { onMedidaSeleccionada("principal") }
+                .padding(12.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = producto.medidaPrincipal,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = FerreGrisOscuro
+                )
+                Text(
+                    text = "$${String.format("%.2f", producto.precioPrincipal)}",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+            }
+        }
+
+        producto.subMedida?.let { sub ->
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .background(
+                        if (medidaSeleccionada == "sub") FerreAmarillo else Color(0xFFF1F5F9),
+                        RoundedCornerShape(12.dp)
+                    )
+                    .clickable { onMedidaSeleccionada("sub") }
+                    .padding(12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = sub.nombreSubMedida,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = FerreGrisOscuro
+                    )
+                    Text(
+                        text = "$${String.format("%.2f", sub.precioSubMedida)}",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
                 }
             }
         }
@@ -371,47 +582,56 @@ fun CardProducto(
         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFCCCED2))
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(130.dp)
-                    .background(FerreGrisClaro, RoundedCornerShape(18.dp))
-                    .clickable { onCardClick() },
-                contentAlignment = Alignment.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(8.dp)
-                        .background(Color(0xFF475569), RoundedCornerShape(6.dp))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                ) {
-                    Text(text = producto.codigoProducto, color = FerreBlanco, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                }
-
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp)
-                        .size(22.dp)
-                        .background(FerreAmarillo, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(text = "\uD83D\uDEE0\uFE0F", fontSize = 11.sp)
-                }
-
-                if (producto.urlImagen.isNotEmpty()) {
-                    AsyncImage(model = producto.urlImagen, contentDescription = producto.nombre, modifier = Modifier.size(80.dp))
-                } else {
-                    Text(text = producto.emoji, fontSize = 48.sp)
-                }
+            Box(modifier = Modifier.clickable { onCardClick() }) {
+                ZonaImagenProducto(
+                    urlImagen = producto.urlImagen,
+                    nombre = producto.nombre,
+                    altura = 130.dp,
+                    emojiFontSize = 48.sp,
+                    badgeIzquierdo = {
+                        Box(
+                            modifier = Modifier
+                                .background(Color(0xFF475569), RoundedCornerShape(6.dp))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = producto.codigoProducto,
+                                color = FerreBlanco,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    },
+                    badgeDerecho = {
+                        Spacer(modifier = Modifier.width(1.dp))
+                    }
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = producto.nombre, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, color = FerreGrisOscuro, maxLines = 1)
-            Text(text = "${producto.marca} - ${producto.medidaPrincipal}", fontSize = 11.sp, color = Color.Gray, maxLines = 1)
+            Text(
+                text = producto.nombre,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 14.sp,
+                color = FerreGrisOscuro,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = textoMarcaMedidas(producto),
+                fontSize = 11.sp,
+                color = Color.Gray,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
             Spacer(modifier = Modifier.height(6.dp))
-            Text(text = "$${String.format("%.2f", producto.precioPrincipal)}", fontWeight = FontWeight.Black, fontSize = 18.sp, color = FerreGrisOscuro)
+            Text(
+                text = "$${String.format("%.2f", producto.precioPrincipal)}",
+                fontWeight = FontWeight.Black,
+                fontSize = 18.sp,
+                color = FerreGrisOscuro
+            )
+
             Spacer(modifier = Modifier.height(8.dp))
 
             Row(
@@ -431,29 +651,34 @@ fun CardProducto(
                         modifier = Modifier
                             .padding(horizontal = 6.dp)
                             .clickable { if (cantidad > 1) cantidad-- },
-                        fontWeight = FontWeight.Bold, fontSize = 14.sp
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
                     )
                     Text(
                         text = cantidad.toString(),
-                        fontWeight = FontWeight.Bold, fontSize = 13.sp, modifier = Modifier.width(14.dp), textAlign = TextAlign.Center
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        modifier = Modifier.width(14.dp),
+                        textAlign = TextAlign.Center
                     )
                     Text(
                         text = "+",
                         modifier = Modifier
                             .padding(horizontal = 6.dp)
                             .clickable { cantidad++ },
-                        fontWeight = FontWeight.Bold, fontSize = 12.sp
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
                     )
                 }
 
                 Button(
                     onClick = {
-                        if (cantidad > 0) {
-                            onAgregarClick(cantidad)
-                            Toast.makeText(context, "✅ Añadido al pedido", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(context, "⚠\uFE0F Selecciona al menos 1 unidad", Toast.LENGTH_SHORT).show()
-                        }
+                        onAgregarClick(cantidad)
+                        Toast.makeText(
+                            context,
+                            "✅ $cantidad x ${producto.nombre}",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     },
                     modifier = Modifier
                         .height(34.dp)
@@ -462,7 +687,12 @@ fun CardProducto(
                     contentPadding = PaddingValues(horizontal = 12.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(text = "Agregar", color = FerreGrisOscuro, fontWeight = FontWeight.Black, fontSize = 12.sp)
+                    Text(
+                        text = "Agregar",
+                        color = FerreGrisOscuro,
+                        fontWeight = FontWeight.Black,
+                        fontSize = 12.sp
+                    )
                 }
             }
         }
@@ -475,6 +705,7 @@ fun PreviewCatalogoCliente() {
     CatalogoPantalla(
         onFlechaRegresar = {},
         onAgregarAlCarrito = {},
+        onNavegarAAdmin = {},
         productViewModel = ProductoViewModel()
     )
 }

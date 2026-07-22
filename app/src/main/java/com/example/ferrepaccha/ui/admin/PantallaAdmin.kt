@@ -2,7 +2,6 @@ package com.example.ferrepaccha.ui.admin
 
 import androidx.compose.runtime.Composable
 import com.example.ferrepaccha.ui.admin.dashboard.PantallaDashboard
-import com.example.ferrepaccha.ui.admin.login.PantallaAdvertencia
 import com.example.ferrepaccha.ui.admin.login.PantallaLogin
 import com.example.ferrepaccha.ui.admin.pedidos.ComponenteGestionPedidos
 import com.example.ferrepaccha.ui.admin.pedidos.DetallePedidoPantalla
@@ -15,24 +14,14 @@ import com.example.ferrepaccha.ui.cliente.ProductoViewModel
 @Composable
 fun PantallaAdmin(
     viewModel: AdminViewModel,
-    productoViewModel: ProductoViewModel
+    productoViewModel: ProductoViewModel,
+    onRegresarAlCatalogo: () -> Unit
 ) {
     when (viewModel.pantallaActual) {
-        TipoSubpantalla.ADVERTENCIA -> {
-            PantallaAdvertencia(
-                onRegresar = { },
-                onContinuar = {
-                    viewModel.cambiarPantalla(TipoSubpantalla.LOGIN)
-                }
-            )
-        }
-
         TipoSubpantalla.LOGIN -> {
             PantallaLogin(
                 viewModel = viewModel,
-                onFlechaRegresar = {
-                    viewModel.cambiarPantalla(TipoSubpantalla.ADVERTENCIA)
-                }
+                onFlechaRegresar = onRegresarAlCatalogo
             )
         }
 
