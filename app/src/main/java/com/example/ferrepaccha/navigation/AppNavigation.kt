@@ -11,6 +11,7 @@ import com.example.ferrepaccha.ui.cliente.CatalogoPantalla
 import com.example.ferrepaccha.ui.cliente.PantallaInicio
 import com.example.ferrepaccha.ui.cliente.ProductoViewModel
 
+//Navegacion de pantallas
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
