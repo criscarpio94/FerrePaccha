@@ -528,7 +528,8 @@ fun SelectorMedidaVenta(
                 Text(
                     text = "$${String.format("%.2f", producto.precioPrincipal)}",
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = Color.Blue,
+                    fontWeight = FontWeight.ExtraBold
                 )
             }
         }
@@ -555,7 +556,8 @@ fun SelectorMedidaVenta(
                     Text(
                         text = "$${String.format("%.2f", sub.precioSubMedida)}",
                         fontSize = 12.sp,
-                        color = Color.Gray
+                        color = Color.Blue,
+                        fontWeight = FontWeight.ExtraBold
                     )
                 }
             }
