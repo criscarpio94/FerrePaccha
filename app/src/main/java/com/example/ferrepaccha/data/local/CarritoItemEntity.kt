@@ -3,6 +3,7 @@ package com.example.ferrepaccha.data.local
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+//Entidad para items del carrito de compras
 @Entity(tableName = "carrito_items")
 data class CarritoItemEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

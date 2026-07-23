@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
+//Base de datos local Room
 @Database(
     entities = [CarritoItemEntity::class, CarritoConfigEntity::class],
     version = 1,
