@@ -21,10 +21,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -41,15 +37,13 @@ import com.example.ferrepaccha.ui.theme.FerreVerde
 
 @Composable
 fun PantallaInicio(
-    onNavegarAlCatalogo: () -> Unit
+    cantidadCarrito: Int,
+    onNavegar: (String) -> Unit
 ) {
-    Scaffold(
-        bottomBar = {
-            BarraNavegacionInferior(
-                pantallaActual = "inicio",
-                onNavegarAlCatalogo = onNavegarAlCatalogo
-            )
-        }
+    ClienteScaffold(
+        pantallaActual = "inicio",
+        cantidadCarrito = cantidadCarrito,
+        onNavegar = onNavegar
     ) { paddingValores ->
         Column(
             modifier = Modifier
@@ -90,7 +84,10 @@ fun PantallaInicio(
                         )
                     }
 
-                    Box(contentAlignment = Alignment.TopEnd) {
+                    Box(
+                        contentAlignment = Alignment.TopEnd,
+                        modifier = Modifier.clickable { onNavegar("carrito") }
+                    ) {
                         Text(
                             text = "\uD83D\uDED2",
                             fontSize = 28.sp,
@@ -99,14 +96,17 @@ fun PantallaInicio(
                         Box(
                             modifier = Modifier
                                 .size(18.dp)
-                                .background(FerreAmarillo, CircleShape),
+                                .background(
+                                    if (cantidadCarrito > 0) FerreAmarillo else Color(0xFF64748B),
+                                    CircleShape
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "0",
+                                text = cantidadCarrito.toString(),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = FerreGrisOscuro
+                                color = if (cantidadCarrito > 0) FerreGrisOscuro else FerreBlanco
                             )
                         }
                     }
@@ -208,7 +208,7 @@ fun PantallaInicio(
                         modifier = Modifier
                             .weight(1f)
                             .height(140.dp)
-                            .clickable { onNavegarAlCatalogo() },
+                            .clickable { onNavegar("catalogo") },
                         shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(containerColor = FerreAmarillo)
                     ) {
@@ -239,7 +239,7 @@ fun PantallaInicio(
                         modifier = Modifier
                             .weight(1f)
                             .height(140.dp)
-                            .clickable { },
+                            .clickable { onNavegar("pedidos") },
                         shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(containerColor = FerreVerde)
                     ) {
@@ -271,52 +271,8 @@ fun PantallaInicio(
     }
 }
 
-@Composable
-fun BarraNavegacionInferior(
-    pantallaActual: String,
-    onNavegarAlCatalogo: () -> Unit
-) {
-    val items = listOf(
-        Triple("Inicio", "inicio", "🏠"),
-        Triple("Catálogo", "catalogo", "📖"),
-        Triple("Carrito", "carrito", "🛒"),
-        Triple("Pedidos", "pedidos", "📋")
-    )
-
-    NavigationBar(
-        containerColor = FerreBlanco,
-        tonalElevation = 16.dp
-    ) {
-        items.forEach { (nombre, ruta, icono) ->
-            val seleccionada = pantallaActual == ruta
-
-            NavigationBarItem(
-                selected = seleccionada,
-                onClick = {
-                    if (ruta == "catalogo") {
-                        onNavegarAlCatalogo()
-                    }
-                },
-                icon = {
-                    Text(text = icono, fontSize = 22.sp)
-                },
-                label = {
-                    Text(
-                        text = nombre,
-                        fontWeight = if (seleccionada) FontWeight.Bold else FontWeight.Normal,
-                        color = if (seleccionada) FerreAmarillo else Color.Gray
-                    )
-                },
-                colors = NavigationBarItemDefaults.colors(
-                    indicatorColor = Color.Transparent
-                )
-            )
-        }
-    }
-}
-
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PantallaInicioPeview() {
-    PantallaInicio(onNavegarAlCatalogo = {})
+    PantallaInicio(cantidadCarrito = 0, onNavegar = {})
 }

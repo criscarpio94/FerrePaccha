@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.ferrepaccha.data.model.ItemCarrito
 import com.example.ferrepaccha.data.model.ProductoFirebase
 import com.example.ferrepaccha.ui.theme.FerreAmarillo
 import com.example.ferrepaccha.ui.theme.FerreBlanco
@@ -83,17 +84,37 @@ private fun textoMarcaMedidas(producto: ProductoFirebase): String {
     }
 }
 
+private fun crearItemCarrito(
+    producto: ProductoFirebase,
+    cantidad: Int,
+    medidaSeleccionada: String = "principal"
+): ItemCarrito {
+    val usaSubMedida = producto.tieneSubMedida && medidaSeleccionada == "sub" && producto.subMedida != null
+    val precio = if (usaSubMedida) producto.subMedida!!.precioSubMedida else producto.precioPrincipal
+    val medida = if (usaSubMedida) producto.subMedida!!.nombreSubMedida else producto.medidaPrincipal
+
+    return ItemCarrito(
+        productoId = producto.id,
+        codigoProducto = producto.codigoProducto,
+        nombre = producto.nombre,
+        precioUnitario = precio,
+        cantidad = cantidad,
+        medidaVenta = medida,
+        urlImagen = producto.urlImagen
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatalogoPantalla(
-    onFlechaRegresar: () -> Unit,
-    onAgregarAlCarrito: () -> Unit,
+    cantidadCarrito: Int,
+    onNavegar: (String) -> Unit,
     onNavegarAAdmin: () -> Unit,
-    productViewModel: ProductoViewModel
+    productViewModel: ProductoViewModel,
+    carritoViewModel: CarritoViewModel
 ) {
     var textoBusqueda by remember { mutableStateOf("") }
     var categoriaSeleccionada by remember { mutableStateOf("Todos") }
-    var cantidadCarritoSimulada by remember { mutableStateOf(0) }
 
     val listaProductosMuestra by productViewModel.listaProductos.collectAsState()
     val estaCargando by productViewModel.isLoading.collectAsState()
@@ -101,10 +122,16 @@ fun CatalogoPantalla(
     var mostrarDetalleBottomSheet by remember { mutableStateOf(false) }
     var productoSeleccionadoDetalle by remember { mutableStateOf<ProductoFirebase?>(null) }
 
+    ClienteScaffold(
+        pantallaActual = "catalogo",
+        cantidadCarrito = cantidadCarrito,
+        onNavegar = onNavegar
+    ) { paddingValores ->
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(FerreBlanco)
+            .padding(paddingValores)
     ) {
         Box(
             modifier = Modifier
@@ -114,14 +141,6 @@ fun CatalogoPantalla(
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .clickable { onFlechaRegresar() }
-            ) {
-                Text(text = "←", color = FerreBlanco, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            }
-
             Text(
                 text = "Catálogo de Productos",
                 color = FerreBlanco,
@@ -129,22 +148,28 @@ fun CatalogoPantalla(
                 fontWeight = FontWeight.Bold
             )
 
-            Box(modifier = Modifier.align(Alignment.CenterEnd)) {
-                Text(text = "\uD83D\uDED2", fontSize = 22.sp)
-                if (cantidadCarritoSimulada > 0) {
-                    Box(
-                        modifier = Modifier
-                            .offset(x = 8.dp, y = -4.dp)
-                            .background(FerreAmarillo, CircleShape)
-                            .padding(horizontal = 6.dp, vertical = 1.dp)
-                    ) {
-                        Text(
-                            text = cantidadCarritoSimulada.toString(),
-                            color = FerreGrisOscuro,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Black
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .clickable { onNavegar("carrito") }
+            ) {
+                Text(text = "🛒", fontSize = 22.sp)
+                Box(
+                    modifier = Modifier
+                        .offset(x = 10.dp, y = (-6).dp)
+                        .background(
+                            if (cantidadCarrito > 0) FerreAmarillo else Color(0xFF64748B),
+                            CircleShape
                         )
-                    }
+                        .padding(horizontal = 5.dp, vertical = 1.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = cantidadCarrito.toString(),
+                        color = if (cantidadCarrito > 0) FerreGrisOscuro else FerreBlanco,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Black
+                    )
                 }
             }
         }
@@ -244,13 +269,17 @@ fun CatalogoPantalla(
                             mostrarDetalleBottomSheet = true
                         },
                         onAgregarClick = { cantidad ->
-                            cantidadCarritoSimulada += cantidad
-                            onAgregarAlCarrito()
+                            if (cantidad > 0) {
+                                carritoViewModel.agregarAlCarrito(
+                                    crearItemCarrito(producto, cantidad)
+                                )
+                            }
                         }
                     )
                 }
             }
         }
+    }
     }
 
     if (mostrarDetalleBottomSheet && productoSeleccionadoDetalle != null) {
@@ -420,14 +449,17 @@ fun CatalogoPantalla(
 
                     Button(
                         onClick = {
-                            cantidadCarritoSimulada += cantidadDetalle
-                            onAgregarAlCarrito()
-                            Toast.makeText(
-                                context,
-                                "✅ $cantidadDetalle x ${prod.nombre} ($etiquetaMedidaSeleccionada)",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            mostrarDetalleBottomSheet = false
+                            if (cantidadDetalle > 0) {
+                                carritoViewModel.agregarAlCarrito(
+                                    crearItemCarrito(prod, cantidadDetalle, medidaSeleccionada)
+                                )
+                                Toast.makeText(
+                                    context,
+                                    "✅ $cantidadDetalle x ${prod.nombre} ($etiquetaMedidaSeleccionada)",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                mostrarDetalleBottomSheet = false
+                            }
                         },
                         modifier = Modifier
                             .weight(1f)
@@ -704,10 +736,5 @@ fun CardProducto(
 @Preview(showBackground = true)
 @Composable
 fun PreviewCatalogoCliente() {
-    CatalogoPantalla(
-        onFlechaRegresar = {},
-        onAgregarAlCarrito = {},
-        onNavegarAAdmin = {},
-        productViewModel = ProductoViewModel()
-    )
+    Text("Vista previa del catálogo — ejecutar en emulador")
 }
