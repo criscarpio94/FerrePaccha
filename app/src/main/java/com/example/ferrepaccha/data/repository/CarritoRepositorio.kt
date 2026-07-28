@@ -5,7 +5,6 @@ import com.example.ferrepaccha.data.local.CarritoDao
 import com.example.ferrepaccha.data.local.CarritoItemEntity
 import com.example.ferrepaccha.data.model.ItemCarrito
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class CarritoRepositorio(private val carritoDao: CarritoDao) {
@@ -50,35 +49,17 @@ class CarritoRepositorio(private val carritoDao: CarritoDao) {
     }
 
     suspend fun guardarTipoEntrega(tipo: String) {
-        val configActual = carritoDao.observarConfig().first()
         carritoDao.guardarConfig(
             CarritoConfigEntity(
                 id = 1,
                 tipoEntrega = tipo,
-                ultimaCedulaConsultada = configActual?.ultimaCedulaConsultada.orEmpty()
-            )
-        )
-    }
-
-    suspend fun guardarUltimaCedula(cedula: String) {
-        val configActual = carritoDao.observarConfig().first()
-        carritoDao.guardarConfig(
-            CarritoConfigEntity(
-                id = 1,
-                tipoEntrega = configActual?.tipoEntrega ?: "LOCAL",
-                ultimaCedulaConsultada = cedula
+                ultimaCedulaConsultada = ""
             )
         )
     }
 
     suspend fun guardarConfigCompleta(tipoEntrega: String, cedula: String) {
-        carritoDao.guardarConfig(
-            CarritoConfigEntity(
-                id = 1,
-                tipoEntrega = tipoEntrega,
-                ultimaCedulaConsultada = cedula
-            )
-        )
+        guardarTipoEntrega(tipoEntrega)
     }
 
     private fun CarritoItemEntity.toDomain() = ItemCarrito(

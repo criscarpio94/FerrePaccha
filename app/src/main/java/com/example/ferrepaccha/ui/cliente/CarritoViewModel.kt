@@ -13,6 +13,7 @@ import com.example.ferrepaccha.data.model.PedidoFirebase
 import com.example.ferrepaccha.data.repository.CarritoRepositorio
 import com.example.ferrepaccha.data.repository.ClienteRepositorio
 import com.example.ferrepaccha.data.repository.PedidoRepositorio
+import com.example.ferrepaccha.util.normalizarCedulaRuc
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -97,7 +98,7 @@ class CarritoViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun confirmarPedido(onExito: (String) -> Unit, onError: (String) -> Unit) {
+    fun confirmarPedido(onExito: (cedula: String, pedidoId: String) -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             val listaItems = items.value
             if (listaItems.isEmpty()) {
@@ -105,7 +106,7 @@ class CarritoViewModel(application: Application) : AndroidViewModel(application)
                 return@launch
             }
 
-            val cedula = cedulaRucInput.value.trim()
+            val cedula = normalizarCedulaRuc(cedulaRucInput.value)
             if (cedula.isEmpty() || cedula.length > 13) {
                 onError("Ingrese una cédula o RUC válida (máx. 13 caracteres)")
                 return@launch
@@ -171,16 +172,16 @@ class CarritoViewModel(application: Application) : AndroidViewModel(application)
             }
 
             val resultadoPedido = pedidoRepositorio.crearPedido(pedido)
-            resultadoPedido.onFailure { error ->
+            val pedidoId = resultadoPedido.getOrElse { error ->
                 val detalle = error.localizedMessage ?: error.message ?: "Error desconocido"
                 onError("No se pudo registrar el pedido: $detalle")
                 return@launch
             }
 
-            carritoRepositorio.guardarConfigCompleta(tipo, cedula)
+            carritoRepositorio.guardarTipoEntrega(tipo)
             carritoRepositorio.vaciarCarrito()
             _pedidoConfirmado.value = true
-            onExito(cedula)
+            onExito(cedula, pedidoId)
         }
     }
 
