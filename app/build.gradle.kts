@@ -78,6 +78,7 @@ dependencies {
     //librerias base de datos y logins
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-functions-ktx")
 
     //libreria adicional de firebase (en el caso que a futuro se requiera)
     implementation("com.google.firebase:firebase-storage-ktx")

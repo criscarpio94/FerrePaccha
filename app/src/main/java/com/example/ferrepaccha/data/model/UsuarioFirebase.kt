@@ -3,6 +3,7 @@ package com.example.ferrepaccha.data.model
 data class UsuarioFirebase(
     val uid: String = "",
     val correo: String = "",
+    val nombre: String = "",
     val nombreCompleto: String = "",
     val rol: String = "Cliente",
     val activo: Boolean = true,
