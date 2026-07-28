@@ -27,7 +27,7 @@ enum class EstadoPedido {
     ENTREGADO;
 
     fun etiqueta(): String = when (this) {
-        RECIBIDO -> "Recibido"
+        RECIBIDO -> "Confirmado"
         PREPARANDO -> "Preparando"
         LISTO -> "Pedido Listo"
         ENTREGADO -> "Entregado"

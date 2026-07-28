@@ -1,5 +1,8 @@
 package com.example.ferrepaccha.ui.admin.pedidos
 
+import android.app.Activity
+import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -12,9 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,60 +29,86 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ferrepaccha.ui.admin.productos.TarjetaProductoItem
-import com.example.ferrepaccha.ui.theme.FerreAmarillo
-import com.example.ferrepaccha.ui.theme.FerreBlanco
-import com.example.ferrepaccha.ui.theme.FerreGrisOscuro
+import androidx.core.content.FileProvider
+import com.example.ferrepaccha.data.model.EstadoPedido
+import com.example.ferrepaccha.ui.admin.AdminViewModel
+import com.example.ferrepaccha.util.FechaUtil
 
 @Composable
 fun DetallePedidoPantalla(
-    onRegresarClick: () -> Unit,
-    onActualizarEstadoClick: () -> Unit,
-    onExportarPdfClick: () -> Unit
+    adminViewModel: AdminViewModel,
+    onRegresarClick: () -> Unit
 ) {
+    val context = LocalContext.current
     val scrollState = rememberScrollState()
+    val pedidos by adminViewModel.pedidos.collectAsState()
+    val pedidoId = adminViewModel.pedidoSeleccionadoId
+
+    val pedido = pedidos.find { it.id == pedidoId }
+        ?: pedidos.find { it.numeroPedido == pedidoId }
+
+    if (pedido == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Pedido no encontrado")
+        }
+        return
+    }
+
+    val estado = try {
+        EstadoPedido.valueOf(pedido.estado)
+    } catch (_: Exception) {
+        EstadoPedido.RECIBIDO
+    }
+    val (colorFondoEstado, colorTextoEstado) = adminViewModel.coloresEstadoPedido(pedido)
+    val colorBoton = adminViewModel.colorBotonEstadoPedido(pedido)
+    val fechaTexto = pedido.fechaCreacion?.toDate()?.let { FechaUtil.formatearCorto(it) }.orEmpty()
+    val tipoEntregaTexto = if (pedido.tipoEntrega == "DOMICILIO") {
+        "🚚 Entrega a domicilio"
+    } else {
+        "🏪 Retiro en local"
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(FerreBlanco)
+            .background(Color.White)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(FerreGrisOscuro)
+                .background(Color(0xFF1E293B))
                 .windowInsetsPadding(WindowInsets.statusBars)
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             IconButton(onClick = onRegresarClick) {
-                Text(text = "←", color = FerreBlanco, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Text(text = "←", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
             }
             Text(
-                text = "PED-2024-001",
-                color = FerreBlanco,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
+                text = pedido.numeroPedido,
+                color = Color.White,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
-
-            Surface(
-                color = Color(0xFFFEF3C7),
-                shape = RoundedCornerShape(10.dp)
-            ) {
+            Surface(color = colorFondoEstado, shape = RoundedCornerShape(10.dp)) {
                 Text(
-                    text = "Preparando",
-                    color = Color(0xFFD97706),
-                    fontSize = 13.sp,
+                    text = estado.etiqueta(),
+                    color = colorTextoEstado,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                 )
             }
         }
@@ -96,8 +123,7 @@ fun DetallePedidoPantalla(
                 text = "DATOS DEL CLIENTE",
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Gray,
-                letterSpacing = 0.5.sp
+                color = Color.Gray
             )
             Spacer(modifier = Modifier.height(8.dp))
             Card(
@@ -106,89 +132,125 @@ fun DetallePedidoPantalla(
                 colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC))
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = "Juan Carlos Perez Lopez", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = FerreGrisOscuro)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(text = "CI/RUC: 1712345678", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FerreGrisOscuro)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(text = "juan@email.com", fontSize = 14.sp, color = Color.Gray)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(text = "0991245677", fontSize = 14.sp, color = Color.Gray)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(text = "Av. Principal 126, Paccha", fontSize = 14.sp, color = Color.Gray)
-                    Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "🚚 Entrega a domicilio  •  30-jun, 10:29 a.m.",
-                        fontSize = 13.sp,
-                        color = Color.LightGray
+                        text = "${pedido.nombresCliente} ${pedido.apellidosCliente}".trim(),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text("CI/RUC: ${pedido.cedulaRuc}")
+                    Text(pedido.correoCliente, color = Color.Gray)
+                    Text(pedido.telefonoCliente, color = Color.Gray)
+                    Text(pedido.direccionEntrega, color = Color.Gray)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("$tipoEntregaTexto  •  $fechaTexto", fontSize = 13.sp, color = Color.Gray)
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-
+            Spacer(modifier = Modifier.height(20.dp))
             Text(
                 text = "PRODUCTOS DEL PEDIDO",
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Gray,
-                letterSpacing = 0.5.sp
+                color = Color.Gray
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            TarjetaProductoItem(
-                nombre = "Martillo Carpintero 16oz",
-                detalles = "Stanley · Unidad",
-                cantidad = 2,
-                precio = "$25.00"
-            )
+            pedido.items.forEach { item ->
+                TarjetaProductoPedidoItem(
+                    nombre = item.nombre,
+                    detalles = "${item.codigoProducto} · ${item.medidaVenta}",
+                    cantidad = item.cantidad,
+                    precio = "$${String.format("%.2f", item.subtotal)}"
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            TarjetaProductoItem(
-                nombre = "Pintura Latex Blanca",
-                detalles = "Condor · Galón",
-                cantidad = 1,
-                precio = "$28.00"
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
+            Spacer(modifier = Modifier.height(12.dp))
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = FerreGrisOscuro)
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
             ) {
                 Row(
-                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "TOTAL DEL PEDIDO", color = FerreBlanco, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    Text(text = "$53.00", color = FerreAmarillo, fontWeight = FontWeight.Black, fontSize = 22.sp)
+                    Text("TOTAL DEL PEDIDO", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(
+                        "$${String.format("%.2f", pedido.total)}",
+                        color = Color(0xFFFACC15),
+                        fontWeight = FontWeight.Black,
+                        fontSize = 22.sp
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Button(
-                onClick = onActualizarEstadoClick,
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(text = "Actualizar estado → Pedido Listo", color = FerreBlanco, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            if (estado != EstadoPedido.ENTREGADO) {
+                Button(
+                    onClick = {
+                        adminViewModel.avanzarEstadoPedido(context) { msg ->
+                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = colorBoton),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = adminViewModel.textoBotonEstadoPedido(pedido),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
             OutlinedButton(
-                onClick = onExportarPdfClick,
+                onClick = {
+                    adminViewModel.exportarPedidoPdf(context) { result ->
+                        result.onSuccess { file ->
+                            try {
+                                val uri = FileProvider.getUriForFile(
+                                    context,
+                                    "${context.packageName}.fileprovider",
+                                    file
+                                )
+                                val intent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "application/pdf"
+                                    putExtra(Intent.EXTRA_STREAM, uri)
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    if (context !is Activity) {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    }
+                                }
+                                context.startActivity(Intent.createChooser(intent, "Compartir PDF"))
+                            } catch (e: Exception) {
+                                Toast.makeText(
+                                    context,
+                                    "No se pudo abrir el PDF: ${e.message}",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }.onFailure { error ->
+                            Toast.makeText(
+                                context,
+                                "Error al exportar PDF: ${error.message}",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = FerreGrisOscuro)
+                border = BorderStroke(1.dp, Color(0xFFCBD5E1))
             ) {
-                Text(text = "📄 Exportar como PDF", fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                Text("📄 Exportar como PDF", fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -202,34 +264,18 @@ fun TarjetaProductoPedidoItem(nombre: String, detalles: String, cantidad: Int, p
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC))
     ) {
         Row(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(Color(0xFFE2E8F0), shape = RoundedCornerShape(12.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(text = "📦", fontSize = 22.sp)
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(text = nombre, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = FerreGrisOscuro)
-                    Text(text = detalles, fontSize = 12.sp, color = Color.Gray)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(text = "Cant: $cantidad", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
-                }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = nombre, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text(text = detalles, fontSize = 12.sp, color = Color.Gray)
+                Text(text = "x$cantidad", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
             }
-            Text(text = precio, fontWeight = FontWeight.Black, fontSize = 16.sp, color = FerreGrisOscuro)
+            Text(text = precio, fontWeight = FontWeight.Black, fontSize = 16.sp)
         }
     }
-}
-
-@Preview(showBackground = true, name = "Vista Detalle Pedido")
-@Composable
-fun PreviewDetallePedido() {
-    DetallePedidoPantalla(onRegresarClick = {}, onActualizarEstadoClick = {}, onExportarPdfClick = {})
 }

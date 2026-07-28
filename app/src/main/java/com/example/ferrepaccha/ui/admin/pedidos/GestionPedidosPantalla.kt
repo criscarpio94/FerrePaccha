@@ -20,99 +20,60 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ferrepaccha.data.model.EstadoPedido
+import com.example.ferrepaccha.data.model.PedidoFirebase
 import com.example.ferrepaccha.ui.admin.AdminViewModel
 import com.example.ferrepaccha.ui.admin.TipoSubpantalla
 import com.example.ferrepaccha.ui.theme.FerreAmarillo
 import com.example.ferrepaccha.ui.theme.FerreBlanco
 import com.example.ferrepaccha.ui.theme.FerreGrisOscuro
+import com.example.ferrepaccha.util.FechaUtil
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ComponenteGestionPedidos(
     viewModel: AdminViewModel,
     onFlechaRegresar: () -> Unit
 ) {
+    var mostrarCalendario by remember { mutableStateOf(false) }
+    val pendientes = viewModel.pedidosPendientesFiltrados()
+    val todos = viewModel.todosPedidosFiltrados()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(FerreBlanco)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(FerreGrisOscuro)
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(bottom = 16.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                IconButton(
-                    onClick = onFlechaRegresar,
-                    modifier = Modifier.align(Alignment.CenterStart)
-                ) {
-                    Text(text = "←", color = FerreBlanco, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                }
-                Text(
-                    text = "Gestión de Pedidos",
-                    color = FerreBlanco,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedTextField(
-                    value = viewModel.busquedaPedidoInput,
-                    onValueChange = { viewModel.busquedaPedidoInput = it },
-                    placeholder = { Text(text = "🔍 Buscar pedido...", fontSize = 13.sp, color = Color.Gray) },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(24.dp),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = FerreBlanco,
-                        unfocusedContainerColor = FerreBlanco,
-                        focusedBorderColor = Color.Transparent,
-                        unfocusedBorderColor = Color.Transparent
-                    )
-                )
-
-                OutlinedTextField(
-                    value = viewModel.filtroFechaInput,
-                    onValueChange = { viewModel.filtroFechaInput = it },
-                    placeholder = { Text(text = "dd/mm/aaaa", fontSize = 13.sp, color = Color.Gray) },
-                    modifier = Modifier.width(125.dp),
-                    shape = RoundedCornerShape(18.dp),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = FerreBlanco,
-                        unfocusedContainerColor = FerreBlanco,
-                        focusedBorderColor = Color.Transparent,
-                        unfocusedBorderColor = Color.Transparent
-                    )
-                )
-            }
-        }
+        EncabezadoBusquedaPedidos(
+            viewModel = viewModel,
+            titulo = "Gestión de Pedidos",
+            onFlechaRegresar = onFlechaRegresar,
+            onAbrirCalendario = { mostrarCalendario = true }
+        )
 
         val scrollState = rememberScrollState()
         Column(
@@ -120,152 +81,269 @@ fun ComponenteGestionPedidos(
                 .fillMaxSize()
                 .verticalScroll(scrollState)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "⏳ PENDIENTES (2)",
+                text = "⏳ PENDIENTES (${pendientes.size})",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFFD97706),
-                letterSpacing = 0.5.sp
+                color = Color(0xFFD97706)
             )
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { viewModel.cambiarPantalla(TipoSubpantalla.DETALLE_PEDIDO) }
-            ) {
-                CardPedidoPendienteReal(
-                    codigo = "PED-2024-001",
-                    cliente = "Juan Carlos Perez Lopez",
-                    productos = "2 productos(s)",
-                    tipoEntrega = "🚚 Domicilio",
-                    total = "$53.00",
-                    estado = "Preparando",
-                    colorEstado = FerreAmarillo,
-                )
+            if (pendientes.isEmpty()) {
+                Text("No hay pedidos pendientes", color = Color.Gray, fontSize = 13.sp)
+            } else {
+                pendientes.forEach { pedido ->
+                    CardPedidoAdmin(
+                        pedido = pedido,
+                        onClick = {
+                            viewModel.abrirDetallePedido(pedido.id, TipoSubpantalla.GESTION_PEDIDOS)
+                        }
+                    )
+                }
             }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { viewModel.cambiarPantalla(TipoSubpantalla.DETALLE_PEDIDO) }
-            ) {
-                CardPedidoPendienteReal(
-                    codigo = "PED-2024-002",
-                    cliente = "Maria Elena Torres Ruiz",
-                    productos = "1 producto(s)",
-                    tipoEntrega = "🏪 Local",
-                    total = "$42.50",
-                    estado = "Confirmado",
-                    colorEstado = Color(0xFFBFDBFE),
-                    colorTextoEstado = Color(0xFF1E40AF)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(4.dp))
-            HorizontalDivider(color = Color.LightGray, thickness = 1.dp)
-
+            HorizontalDivider(color = Color.LightGray)
             Text(
-                text = "TODOS LOS PEDIDOS",
+                text = "TODOS LOS PEDIDOS (30 días)",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Gray,
-                letterSpacing = 0.5.sp
+                color = Color.Gray
             )
 
-            CardPedidoHistoriaReal(
-                codigo = "PED-2026-001",
-                cliente = "Juan Carlos Perez Lopez",
-                fecha = "29 jun 2026",
-                estado = "Preparando",
-                total = "$53.00",
-                colorEstado = FerreAmarillo,
-            )
+            todos.forEach { pedido ->
+                CardPedidoAdmin(
+                    pedido = pedido,
+                    compacto = true,
+                    onClick = {
+                        viewModel.abrirDetallePedido(pedido.id, TipoSubpantalla.GESTION_PEDIDOS)
+                    }
+                )
+            }
+        }
+    }
 
-            CardPedidoHistoriaReal(
-                codigo = "PED-2026-002",
-                cliente = "Maria Elena Torres Ruiz",
-                fecha = "29 jun 2026",
-                estado = "Confirmado",
-                total = "$42.50",
-                colorEstado = Color(0xFFBFDBFE),
-                colorTextoEstado = Color(0xFF1E40AF)
-            )
+    if (mostrarCalendario) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { mostrarCalendario = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        viewModel.filtroFechaMillis = millis
+                        viewModel.filtroFechaInput = FechaUtil.formatear(Date(millis), "dd/MM/yyyy")
+                    }
+                    mostrarCalendario = false
+                }) { Text("Aplicar") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    viewModel.filtroFechaMillis = null
+                    viewModel.filtroFechaInput = ""
+                    mostrarCalendario = false
+                }) { Text("Limpiar") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ComponenteBuscarPedidos(
+    viewModel: AdminViewModel,
+    onFlechaRegresar: () -> Unit
+) {
+    var mostrarCalendario by remember { mutableStateOf(false) }
+    val resultados = viewModel.todosPedidosFiltrados()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(FerreBlanco)
+    ) {
+        EncabezadoBusquedaPedidos(
+            viewModel = viewModel,
+            titulo = "Buscar Pedidos",
+            onFlechaRegresar = onFlechaRegresar,
+            onAbrirCalendario = { mostrarCalendario = true }
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            if (resultados.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Sin resultados. Use número de pedido, nombre o fecha.", color = Color.Gray)
+                }
+            } else {
+                resultados.forEach { pedido ->
+                    CardPedidoAdmin(
+                        pedido = pedido,
+                        onClick = {
+                            viewModel.abrirDetallePedido(pedido.id, TipoSubpantalla.BUSCAR_PEDIDOS)
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    if (mostrarCalendario) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { mostrarCalendario = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        viewModel.filtroFechaMillis = millis
+                        viewModel.filtroFechaInput = FechaUtil.formatear(Date(millis), "dd/MM/yyyy")
+                    }
+                    mostrarCalendario = false
+                }) { Text("Aplicar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarCalendario = false }) { Text("Cancelar") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
         }
     }
 }
 
 @Composable
-fun CardPedidoPendienteReal(
-    codigo: String,
-    cliente: String,
-    productos: String,
-    tipoEntrega: String,
-    total: String,
-    estado: String,
-    colorEstado: Color,
-    colorTextoEstado: Color = Color.Black
+private fun EncabezadoBusquedaPedidos(
+    viewModel: AdminViewModel,
+    titulo: String,
+    onFlechaRegresar: () -> Unit,
+    onAbrirCalendario: () -> Unit
 ) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(FerreGrisOscuro)
+            .windowInsetsPadding(WindowInsets.statusBars)
+            .padding(bottom = 16.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp, vertical = 12.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            IconButton(onClick = onFlechaRegresar, modifier = Modifier.align(Alignment.CenterStart)) {
+                Text(text = "←", color = FerreBlanco, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            }
+            Text(text = titulo, color = FerreBlanco, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedTextField(
+                value = viewModel.busquedaPedidoInput,
+                onValueChange = { viewModel.busquedaPedidoInput = it },
+                placeholder = { Text("🔍 Buscar pedido o cliente...", fontSize = 13.sp, color = Color.Gray) },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(24.dp),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = FerreBlanco,
+                    unfocusedContainerColor = FerreBlanco,
+                    focusedBorderColor = Color.Transparent,
+                    unfocusedBorderColor = Color.Transparent
+                )
+            )
+            Box(
+                modifier = Modifier
+                    .width(120.dp)
+                    .clickable { onAbrirCalendario() }
+            ) {
+                OutlinedTextField(
+                    value = viewModel.filtroFechaInput,
+                    onValueChange = {},
+                    readOnly = true,
+                    placeholder = { Text("Fecha", fontSize = 13.sp, color = Color.Gray) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = false,
+                    shape = RoundedCornerShape(18.dp),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledContainerColor = FerreBlanco,
+                        disabledBorderColor = Color.Transparent
+                    )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CardPedidoAdmin(
+    pedido: PedidoFirebase,
+    compacto: Boolean = false,
+    onClick: () -> Unit
+) {
+    val estado = try {
+        EstadoPedido.valueOf(pedido.estado)
+    } catch (_: Exception) {
+        EstadoPedido.RECIBIDO
+    }
+    val colorEstado = when (estado) {
+        EstadoPedido.RECIBIDO -> Color(0xFFBFDBFE) to Color(0xFF1E40AF)
+        EstadoPedido.PREPARANDO -> FerreAmarillo to Color.Black
+        EstadoPedido.LISTO -> Color(0xFFD1FAE5) to Color(0xFF065F46)
+        EstadoPedido.ENTREGADO -> Color(0xFFE2E8F0) to Color(0xFF475569)
+    }
+    val fecha = pedido.fechaCreacion?.toDate()?.let {
+        SimpleDateFormat("dd MMM yyyy", Locale("es", "EC")).format(it)
+    }.orEmpty()
+    val tipoEntrega = if (pedido.tipoEntrega == "DOMICILIO") "🚚 Domicilio" else "🏪 Local"
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(containerColor = if (compacto) Color(0xFFF9F9F9) else Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (compacto) 0.dp else 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(text = codigo, fontWeight = FontWeight.Bold)
+                Text(text = pedido.numeroPedido, fontWeight = FontWeight.Bold)
                 Text(
-                    text = estado,
-                    color = colorTextoEstado,
+                    text = estado.etiqueta(),
+                    color = colorEstado.second,
                     modifier = Modifier
-                        .background(colorEstado, RoundedCornerShape(8.dp))
+                        .background(colorEstado.first, RoundedCornerShape(8.dp))
                         .padding(horizontal = 8.dp, vertical = 2.dp),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = cliente, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-            Text(text = "$productos • $tipoEntrega", fontSize = 13.sp, color = Color.Gray)
-            Text(text = "Total: $total", fontWeight = FontWeight.Bold, color = Color(0xFFD97706))
-        }
-    }
-}
-
-@Composable
-fun CardPedidoHistoriaReal(
-    codigo: String,
-    cliente: String,
-    fecha: String,
-    estado: String,
-    total: String,
-    colorEstado: Color,
-    colorTextoEstado: Color = Color.Black
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F9F9))
-    ) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = codigo, fontWeight = FontWeight.Bold)
-                Text(text = cliente, fontSize = 14.sp)
-                Text(text = fecha, fontSize = 12.sp, color = Color.Gray)
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text(text = total, fontWeight = FontWeight.Bold)
-                Text(
-                    text = estado,
-                    fontSize = 12.sp,
-                    color = colorTextoEstado,
-                    modifier = Modifier
-                        .background(colorEstado.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
-                        .padding(horizontal = 8.dp, vertical = 2.dp)
-                )
-            }
+            if (!compacto) Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "${pedido.nombresCliente} ${pedido.apellidosCliente}".trim(),
+                fontSize = if (compacto) 14.sp else 16.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = "${pedido.items.size} producto(s) • $tipoEntrega${if (fecha.isNotBlank()) " • $fecha" else ""}",
+                fontSize = 13.sp,
+                color = Color.Gray
+            )
+            Text(
+                text = "Total: $${String.format("%.2f", pedido.total)}",
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFD97706)
+            )
         }
     }
 }
