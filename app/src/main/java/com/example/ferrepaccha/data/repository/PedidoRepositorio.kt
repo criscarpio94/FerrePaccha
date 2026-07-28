@@ -4,11 +4,15 @@ import android.util.Log
 import com.example.ferrepaccha.data.model.EstadoPedido
 import com.example.ferrepaccha.data.model.PedidoFirebase
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import kotlinx.coroutines.channels.awaitClose
+import com.google.firebase.firestore.snapshots
+import com.example.ferrepaccha.util.normalizarCedulaRuc
+import com.example.ferrepaccha.util.soloValidos
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import java.util.Calendar
 import java.util.Locale
@@ -18,6 +22,10 @@ class PedidoRepositorio {
     private val pedidosColeccion = db.collection("pedidos")
     private val contadoresColeccion = db.collection("contadores")
 
+    companion object {
+        private const val TAG = "PedidoRepositorio"
+    }
+
     suspend fun crearPedido(pedido: PedidoFirebase): Result<String> {
         return try {
             val docRef = pedidosColeccion.document()
@@ -26,61 +34,132 @@ class PedidoRepositorio {
             docRef.set(datosPedido).await()
             Result.success(docRef.id)
         } catch (e: Exception) {
-            Log.e("PedidoRepositorio", "Error al crear pedido", e)
+            Log.e(TAG, "Error al crear pedido", e)
             Result.failure(e)
         }
     }
 
-    fun escucharPedidosRecientes(cedulaRuc: String): Flow<List<PedidoFirebase>> = callbackFlow {
-        if (cedulaRuc.isBlank()) {
-            trySend(emptyList())
-            close()
-            return@callbackFlow
-        }
+    fun escucharPedidosRecientes(cedulaRuc: String): Flow<List<PedidoFirebase>> {
+        val cedula = normalizarCedulaRuc(cedulaRuc)
+        if (cedula.isBlank()) return flowOf(emptyList())
 
-        val listener = pedidosColeccion
-            .whereEqualTo("cedulaRuc", cedulaRuc.trim())
+        return pedidosColeccion
+            .whereEqualTo("cedulaRuc", cedula)
             .orderBy("fechaCreacion", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, _ ->
-                if (snapshot != null) {
-                    val pedidos = snapshot.documents.mapNotNull { doc ->
-                        doc.toObject(PedidoFirebase::class.java)?.copy(id = doc.id)
-                    }
-                    trySend(pedidos)
-                }
+            .snapshots()
+            .map { snapshot ->
+                snapshot.documents
+                    .filter { it.exists() }
+                    .mapNotNull { doc -> mapearDocumentoAPedido(doc) }
+                    .soloValidos()
             }
+    }
 
-        awaitClose { listener.remove() }
+    fun escucharPedidoPorId(pedidoId: String): Flow<PedidoFirebase?> {
+        if (pedidoId.isBlank()) return flowOf(null)
+
+        return pedidosColeccion.document(pedidoId)
+            .snapshots()
+            .map { snapshot ->
+                if (snapshot.exists()) mapearDocumentoAPedido(snapshot) else null
+            }
     }
 
     suspend fun buscarPedidos(texto: String): List<PedidoFirebase> {
         val consulta = texto.trim()
         if (consulta.isEmpty()) return emptyList()
 
+        val consultaPedido = consulta.uppercase(Locale.getDefault())
+
         return try {
             val porNumero = pedidosColeccion
-                .whereEqualTo("numeroPedido", consulta.uppercase(Locale.getDefault()))
+                .whereEqualTo("numeroPedido", consultaPedido)
                 .get()
                 .await()
 
             if (!porNumero.isEmpty) {
                 return porNumero.documents.mapNotNull { doc ->
-                    doc.toObject(PedidoFirebase::class.java)?.copy(id = doc.id)
-                }
+                    mapearDocumentoAPedido(doc)
+                }.soloValidos()
             }
 
             val porCedula = pedidosColeccion
-                .whereEqualTo("cedulaRuc", consulta)
+                .whereEqualTo("cedulaRuc", normalizarCedulaRuc(consulta))
                 .orderBy("fechaCreacion", Query.Direction.DESCENDING)
                 .get()
                 .await()
 
             porCedula.documents.mapNotNull { doc ->
-                doc.toObject(PedidoFirebase::class.java)?.copy(id = doc.id)
-            }
+                mapearDocumentoAPedido(doc)
+            }.soloValidos()
         } catch (e: Exception) {
             emptyList()
         }
+    }
+
+    fun escucharTodosPedidos(): Flow<List<PedidoFirebase>> {
+        return pedidosColeccion
+            .orderBy("fechaCreacion", Query.Direction.DESCENDING)
+            .snapshots()
+            .map { snapshot ->
+                snapshot.documents
+                    .filter { it.exists() }
+                    .mapNotNull { doc -> mapearDocumentoAPedido(doc) }
+                    .soloValidos()
+            }
+    }
+
+    fun escucharBusquedaPedidos(texto: String): Flow<List<PedidoFirebase>> {
+        val consulta = texto.trim()
+        if (consulta.isEmpty()) return flowOf(emptyList())
+
+        val consultaPedido = consulta.uppercase(Locale.getDefault())
+        val consultaCedula = normalizarCedulaRuc(consulta)
+        val query = if (consultaPedido.startsWith("PED-")) {
+            pedidosColeccion.whereEqualTo("numeroPedido", consultaPedido)
+        } else {
+            pedidosColeccion
+                .whereEqualTo("cedulaRuc", consultaCedula)
+                .orderBy("fechaCreacion", Query.Direction.DESCENDING)
+        }
+
+        return query.snapshots().map { snapshot ->
+            snapshot.documents
+                .filter { it.exists() }
+                .mapNotNull { doc -> mapearDocumentoAPedido(doc) }
+                .soloValidos()
+        }
+    }
+
+    suspend fun obtenerPedidoPorId(pedidoId: String): PedidoFirebase? {
+        return try {
+            val doc = pedidosColeccion.document(pedidoId).get().await()
+            if (doc.exists()) {
+                mapearDocumentoAPedido(doc)
+            } else null
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    suspend fun actualizarEstadoPedido(pedidoId: String, estado: String): Boolean {
+        return try {
+            pedidosColeccion.document(pedidoId)
+                .update("estado", estado)
+                .await()
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al actualizar estado", e)
+            false
+        }
+    }
+
+    private fun mapearDocumentoAPedido(doc: DocumentSnapshot): PedidoFirebase? {
+        val pedido = doc.toObject(PedidoFirebase::class.java) ?: return null
+        return pedido.copy(
+            id = doc.id,
+            estado = doc.getString("estado") ?: pedido.estado
+        )
     }
 
     private fun construirMapaPedido(pedido: PedidoFirebase, numeroPedido: String): HashMap<String, Any> {
@@ -98,7 +177,7 @@ class PedidoRepositorio {
 
         return hashMapOf(
             "numeroPedido" to numeroPedido,
-            "cedulaRuc" to pedido.cedulaRuc,
+            "cedulaRuc" to normalizarCedulaRuc(pedido.cedulaRuc),
             "nombresCliente" to pedido.nombresCliente,
             "apellidosCliente" to pedido.apellidosCliente,
             "direccionEntrega" to pedido.direccionEntrega,
@@ -134,7 +213,7 @@ class PedidoRepositorio {
                 "$prefijo$siguiente"
             }.await()
         } catch (e: Exception) {
-            Log.w("PedidoRepositorio", "Transacción contador falló, usando respaldo", e)
+            Log.w(TAG, "Transacción contador falló, usando respaldo", e)
             generarNumeroPedidoRespaldo(prefijo, docContador)
         }
     }
@@ -153,7 +232,7 @@ class PedidoRepositorio {
             docContador.set(mapOf("ultimo" to siguiente)).await()
             "$prefijo$siguiente"
         } catch (e: Exception) {
-            Log.w("PedidoRepositorio", "Contador falló, calculando desde pedidos", e)
+            Log.w(TAG, "Contador falló, calculando desde pedidos", e)
             val todos = pedidosColeccion.get().await()
             val maxNum = todos.documents.mapNotNull { doc ->
                 doc.getString("numeroPedido")
