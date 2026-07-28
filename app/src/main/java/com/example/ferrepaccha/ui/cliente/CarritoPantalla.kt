@@ -63,7 +63,7 @@ fun CarritoPantalla(
     carritoViewModel: CarritoViewModel,
     cantidadCarrito: Int,
     onNavegar: (String) -> Unit,
-    onPedidoConfirmado: (String) -> Unit
+    onPedidoConfirmado: (cedula: String, pedidoId: String) -> Unit
 ) {
     val items by carritoViewModel.items.collectAsState()
     val tipoEntrega by carritoViewModel.tipoEntrega.collectAsState()
@@ -93,11 +93,11 @@ fun CarritoPantalla(
                 onRegresar = { pasoActual = PasoCarrito.TERMINOS },
                 onConfirmar = {
                     carritoViewModel.confirmarPedido(
-                        onExito = { cedula ->
+                        onExito = { cedula, pedidoId ->
                             pasoActual = PasoCarrito.LISTA
                             Toast.makeText(context, "✅ Pedido registrado con éxito", Toast.LENGTH_LONG).show()
                             carritoViewModel.limpiarFormularioCliente()
-                            onPedidoConfirmado(cedula)
+                            onPedidoConfirmado(cedula, pedidoId)
                         },
                         onError = { msg ->
                             Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
