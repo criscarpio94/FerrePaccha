@@ -81,28 +81,43 @@ class ProductoViewModel : ViewModel() {
         context: android.content.Context,
         producto: ProductoFirebase,
         imagenUri: android.net.Uri?,
-        onExito: () -> Unit,
+        onExito: (String?) -> Unit,
         onError: (String) -> Unit
     ) {
         viewModelScope.launch {
             try {
-                var urlImagenFinal = ""
+                var urlImagenFinal = producto.urlImagen
+                var advertencia: String? = null
 
                 if (imagenUri != null) {
-                    val urlSubida = ImgBbRepository.subirFotoAdmin(context, imagenUri)
+                    val urlSubida = ImgBbRepository.subirFotoAdmin(
+                        context,
+                        imagenUri,
+                        producto.codigoProducto.ifBlank { producto.nombre }
+                    )
                     if (urlSubida != null) {
                         urlImagenFinal = urlSubida
+                    } else if (producto.urlImagen.isNotBlank()) {
+                        urlImagenFinal = producto.urlImagen
+                        advertencia = "No se obtuvo nueva URL; se conservó la imagen anterior"
+                    } else {
+                        advertencia = "Imagen subida pero no se obtuvo enlace; producto guardado sin foto"
                     }
                 }
 
-                val docRef = db.collection("productos").document()
+                val docRef = if (producto.id.isNotBlank()) {
+                    db.collection("productos").document(producto.id)
+                } else {
+                    db.collection("productos").document()
+                }
+
                 val productoFinal = producto.copy(
                     id = docRef.id,
                     urlImagen = urlImagenFinal
                 )
 
                 docRef.set(productoFinal).await()
-                onExito()
+                onExito(advertencia)
             } catch (e: Exception) {
                 onError(e.message ?: "Error al guardar")
             }

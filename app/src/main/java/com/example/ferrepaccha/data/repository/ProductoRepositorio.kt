@@ -29,4 +29,24 @@ class ProductoRepositorio {
             false
         }
     }
+
+    suspend fun actualizarProducto(producto: ProductoFirebase): Boolean {
+        return try {
+            productosColeccion.document(producto.id).set(producto).await()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    suspend fun obtenerProductoPorId(productoId: String): ProductoFirebase? {
+        return try {
+            val doc = productosColeccion.document(productoId).get().await()
+            if (doc.exists()) {
+                doc.toObject(ProductoFirebase::class.java)?.apply { id = doc.id }
+            } else null
+        } catch (e: Exception) {
+            null
+        }
+    }
 }

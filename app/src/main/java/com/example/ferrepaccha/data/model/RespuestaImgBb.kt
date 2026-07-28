@@ -1,14 +1,18 @@
 package com.example.ferrepaccha.data.model
 
+import com.google.gson.annotations.SerializedName
+
 data class RespuestaImgBb(
     val data: DatosImagen?,
-    val succes: Boolean,
-    val status: Int
+    @SerializedName("success")
+    val success: Boolean = false,
+    val status: Int = 0
 )
 
 data class DatosImagen(
     val url: String?,
-    val display_url: String?,
+    @SerializedName("display_url")
+    val displayUrl: String?,
     val image: DetallesImagen?
 )
 
