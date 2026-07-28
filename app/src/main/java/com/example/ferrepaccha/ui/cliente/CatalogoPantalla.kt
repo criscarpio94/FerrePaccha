@@ -111,7 +111,9 @@ fun CatalogoPantalla(
     onNavegar: (String) -> Unit,
     onNavegarAAdmin: () -> Unit,
     productViewModel: ProductoViewModel,
-    carritoViewModel: CarritoViewModel
+    carritoViewModel: CarritoViewModel,
+    mostrarBarraInferior: Boolean = true,
+    onRegresarAdmin: (() -> Unit)? = null
 ) {
     var textoBusqueda by remember { mutableStateOf("") }
     var categoriaSeleccionada by remember { mutableStateOf("Todos") }
@@ -125,7 +127,8 @@ fun CatalogoPantalla(
     ClienteScaffold(
         pantallaActual = "catalogo",
         cantidadCarrito = cantidadCarrito,
-        onNavegar = onNavegar
+        onNavegar = onNavegar,
+        mostrarBarraInferior = mostrarBarraInferior
     ) { paddingValores ->
     Column(
         modifier = Modifier
@@ -141,13 +144,24 @@ fun CatalogoPantalla(
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             contentAlignment = Alignment.Center
         ) {
+            if (onRegresarAdmin != null) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .clickable { onRegresarAdmin() }
+                ) {
+                    Text(text = "←", color = FerreBlanco, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+
             Text(
-                text = "Catálogo de Productos",
+                text = if (onRegresarAdmin != null) "Catálogo (Admin)" else "Catálogo de Productos",
                 color = FerreBlanco,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
 
+            if (onRegresarAdmin == null) {
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
@@ -171,6 +185,7 @@ fun CatalogoPantalla(
                         fontWeight = FontWeight.Black
                     )
                 }
+            }
             }
         }
         //BARRA DE BUSQUEDA
@@ -362,15 +377,26 @@ fun CatalogoPantalla(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Start,
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "Código: ", fontSize = 12.sp, color = Color.Gray)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = "Código: ", fontSize = 12.sp, color = Color.Gray)
+                        Text(
+                            text = prod.codigoProducto,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF334155)
+                        )
+                    }
                     Text(
-                        text = prod.codigoProducto,
+                        text = "IVA ${prod.porcentajeIva.toInt()}%",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF334155)
+                        color = Color(0xFF64748B),
+                        modifier = Modifier
+                            .background(Color(0xFFF1F5F9), RoundedCornerShape(8.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
 
@@ -657,6 +683,12 @@ fun CardProducto(
                 color = Color.Gray,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = "IVA ${producto.porcentajeIva.toInt()}%",
+                fontSize = 10.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF64748B)
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(

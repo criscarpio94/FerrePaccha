@@ -190,9 +190,9 @@ fun PantallaLogin(
 @Composable
 fun PreviewPantallaLogin() {
     FerrePacchaTheme {
-        PantallaLogin(
-            viewModel = AdminViewModel(),
-            onFlechaRegresar = {}
+        Text(
+            text = "Vista previa del login — ejecutar en emulador",
+            modifier = Modifier.padding(16.dp)
         )
     }
 }

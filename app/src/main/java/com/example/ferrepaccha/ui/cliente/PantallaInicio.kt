@@ -38,7 +38,9 @@ import com.example.ferrepaccha.ui.theme.FerreVerde
 @Composable
 fun PantallaInicio(
     cantidadCarrito: Int,
-    onNavegar: (String) -> Unit
+    sesionAdminActiva: Boolean = false,
+    onNavegar: (String) -> Unit,
+    onNavegarAdmin: () -> Unit = {}
 ) {
     ClienteScaffold(
         pantallaActual = "inicio",
@@ -84,30 +86,48 @@ fun PantallaInicio(
                         )
                     }
 
-                    Box(
-                        contentAlignment = Alignment.TopEnd,
-                        modifier = Modifier.clickable { onNavegar("carrito") }
-                    ) {
-                        Text(
-                            text = "\uD83D\uDED2",
-                            fontSize = 28.sp,
-                            modifier = Modifier.padding(end = 6.dp, top = 6.dp)
-                        )
-                        Box(
+                    if (sesionAdminActiva) {
+                        Row(
                             modifier = Modifier
-                                .size(18.dp)
-                                .background(
-                                    if (cantidadCarrito > 0) FerreAmarillo else Color(0xFF64748B),
-                                    CircleShape
-                                ),
-                            contentAlignment = Alignment.Center
+                                .clickable { onNavegarAdmin() }
+                                .padding(4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(text = "⚙️", fontSize = 22.sp)
+                            Text(
+                                text = "Admin",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = FerreAmarillo
+                            )
+                        }
+                    } else {
+                        Box(
+                            contentAlignment = Alignment.TopEnd,
+                            modifier = Modifier.clickable { onNavegar("carrito") }
                         ) {
                             Text(
-                                text = cantidadCarrito.toString(),
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (cantidadCarrito > 0) FerreGrisOscuro else FerreBlanco
+                                text = "\uD83D\uDED2",
+                                fontSize = 28.sp,
+                                modifier = Modifier.padding(end = 6.dp, top = 6.dp)
                             )
+                            Box(
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .background(
+                                        if (cantidadCarrito > 0) FerreAmarillo else Color(0xFF64748B),
+                                        CircleShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = cantidadCarrito.toString(),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (cantidadCarrito > 0) FerreGrisOscuro else FerreBlanco
+                                )
+                            }
                         }
                     }
                 }

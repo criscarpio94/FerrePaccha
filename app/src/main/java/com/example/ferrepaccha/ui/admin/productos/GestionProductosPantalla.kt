@@ -1,5 +1,6 @@
 package com.example.ferrepaccha.ui.admin.productos
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,26 +16,36 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.ferrepaccha.data.model.ProductoFirebase
+import com.example.ferrepaccha.ui.admin.AdminViewModel
 import com.example.ferrepaccha.ui.cliente.ProductoViewModel
 import com.example.ferrepaccha.ui.theme.FerreAmarillo
 import com.example.ferrepaccha.ui.theme.FerreBlanco
@@ -43,10 +54,23 @@ import com.example.ferrepaccha.ui.theme.FerreGrisOscuro
 @Composable
 fun GestionProductosPantalla(
     productoViewModel: ProductoViewModel,
+    adminViewModel: AdminViewModel,
     onAgregarProductoClick: () -> Unit,
     onRegresarClick: () -> Unit
 ) {
     val productos by productoViewModel.listaProductos.collectAsState()
+    val context = LocalContext.current
+    var productoAEliminar by remember { mutableStateOf<ProductoFirebase?>(null) }
+
+    val productosFiltrados = productos.filter { producto ->
+        val q = adminViewModel.busquedaProductoInput.trim()
+        if (q.isEmpty()) true
+        else {
+            producto.nombre.contains(q, true) ||
+                producto.marca.contains(q, true) ||
+                producto.codigoProducto.contains(q, true)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -83,29 +107,67 @@ fun GestionProductosPantalla(
                 Text("🔺 CARGAR NUEVO PRODUCTO", color = FerreGrisOscuro, fontWeight = FontWeight.Black, fontSize = 14.sp)
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            if (productos.isEmpty()) {
+            OutlinedTextField(
+                value = adminViewModel.busquedaProductoInput,
+                onValueChange = { adminViewModel.busquedaProductoInput = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Buscar por nombre, marca o código...") },
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (productosFiltrados.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "No hay productos disponibles.", color = Color.Gray, fontSize = 14.sp)
+                    Text(text = "No hay productos para mostrar.", color = Color.Gray, fontSize = 14.sp)
                 }
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(productos) { producto ->
+                    items(productosFiltrados, key = { it.id }) { producto ->
                         TarjetaProductoItem(
                             producto = producto,
-                            onEditarClick = { },
-                            onEliminarClick = {
-                                productoViewModel.eliminarProducto(producto.id) { _ -> }
-                            }
+                            onEditarClick = { adminViewModel.cargarProductoParaEdicion(producto) },
+                            onEliminarClick = { productoAEliminar = producto }
                         )
                     }
                 }
             }
         }
+    }
+
+    productoAEliminar?.let { producto ->
+        AlertDialog(
+            onDismissRequest = { productoAEliminar = null },
+            title = { Text("Eliminar producto") },
+            text = { Text("¿Está seguro de eliminar \"${producto.nombre}\"?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    productoViewModel.eliminarProducto(producto.id) { ok ->
+                        if (ok) {
+                            adminViewModel.registrarAuditoriaProducto(
+                                productoId = producto.id,
+                                codigo = producto.codigoProducto,
+                                nombre = producto.nombre,
+                                motivo = "Eliminación de producto",
+                                anteriores = mapOf("nombre" to producto.nombre),
+                                nuevos = emptyMap()
+                            )
+                            Toast.makeText(context, "Producto eliminado", Toast.LENGTH_SHORT).show()
+                        }
+                        productoAEliminar = null
+                    }
+                }) { Text("Eliminar", color = Color.Red) }
+            },
+            dismissButton = {
+                TextButton(onClick = { productoAEliminar = null }) { Text("Cancelar") }
+            }
+        )
     }
 }
 
@@ -134,13 +196,20 @@ fun TarjetaProductoItem(
                 Box(
                     modifier = Modifier
                         .size(45.dp)
-                        .background(Color(0xFFF1F5F9), shape = RoundedCornerShape(10.dp)),
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(0xFFF1F5F9)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = if (producto.urlImagen.isNotBlank()) "🖼️" else "\uD83D\uDEE0\uFE0F",
-                        fontSize = 20.sp
-                    )
+                    if (producto.urlImagen.isNotBlank()) {
+                        AsyncImage(
+                            model = producto.urlImagen,
+                            contentDescription = producto.nombre,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Text(text = "🛠️", fontSize = 20.sp)
+                    }
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
@@ -151,18 +220,15 @@ fun TarjetaProductoItem(
                         color = FerreGrisOscuro,
                         maxLines = 2
                     )
-                    if (producto.marca.isNotEmpty()) {
-                        Text(text = producto.marca, fontSize = 12.sp, color = Color.Gray)
-                    }
+                    Text(
+                        text = "${producto.codigoProducto} · ${producto.marca}",
+                        fontSize = 11.sp,
+                        color = Color.Gray
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(
-                horizontalAlignment = Alignment.End,
-                modifier = Modifier.wrapContentWidth()
-            ) {
+            Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = "$${String.format("%.2f", producto.precioPrincipal)}",
                     fontWeight = FontWeight.Black,
@@ -170,35 +236,15 @@ fun TarjetaProductoItem(
                     color = FerreGrisOscuro
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    IconButton(onClick = onEditarClick, modifier = Modifier.size(30.dp)) {
-                        Text(text = "✏️", fontSize = 14.sp)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = onEditarClick) {
+                        Text("✏️ Editar", fontSize = 12.sp)
                     }
-                    IconButton(onClick = onEliminarClick, modifier = Modifier.size(30.dp)) {
-                        Text(text = "🗑️", fontSize = 14.sp)
+                    TextButton(onClick = onEliminarClick) {
+                        Text("🗑️ Eliminar", fontSize = 12.sp, color = Color.Red)
                     }
                 }
             }
         }
     }
-}
-
-@Composable
-fun TarjetaProductoItem(
-    nombre: String,
-    precio: String,
-    detalles: String,
-    cantidad: Int
-) {
-    val productoFicticio = ProductoFirebase(
-        nombre = nombre,
-        precioPrincipal = precio.replace("$", "").toDoubleOrNull() ?: 0.0,
-        marca = detalles
-    )
-
-    TarjetaProductoItem(
-        producto = productoFicticio,
-        onEditarClick = {},
-        onEliminarClick = {}
-    )
 }
