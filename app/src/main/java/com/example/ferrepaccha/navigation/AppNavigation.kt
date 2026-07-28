@@ -1,15 +1,21 @@
 package com.example.ferrepaccha.navigation
 
 import android.app.Application
+import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.ferrepaccha.ui.admin.AdminViewModel
+import com.example.ferrepaccha.ui.admin.AdminViewModelFactory
 import com.example.ferrepaccha.ui.admin.PantallaAdmin
 import com.example.ferrepaccha.ui.cliente.CarritoPantalla
 import com.example.ferrepaccha.ui.cliente.CarritoViewModel
@@ -28,6 +34,9 @@ fun AppNavigation() {
     val application = context.applicationContext as Application
 
     val productoViewModel: ProductoViewModel = viewModel()
+    val adminViewModel: AdminViewModel = viewModel(
+        factory = AdminViewModelFactory(application)
+    )
     val carritoViewModel: CarritoViewModel = viewModel(
         factory = CarritoViewModelFactory(application)
     )
@@ -36,6 +45,21 @@ fun AppNavigation() {
     )
 
     val cantidadCarrito by carritoViewModel.cantidadTotal.collectAsState()
+    val sesionAdminActiva by adminViewModel.sesionAdminActiva.collectAsState()
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner, pedidoViewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) {
+                val activity = context as? ComponentActivity
+                if (activity?.isChangingConfigurations != true) {
+                    pedidoViewModel.limpiarSesionConsulta()
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     fun navegarCliente(ruta: String) {
         navController.navigate(ruta) {
@@ -47,6 +71,11 @@ fun AppNavigation() {
         }
     }
 
+    fun navegarAdmin() {
+        adminViewModel.ingresarPanelAdmin()
+        navController.navigate("login_admin")
+    }
+
     NavHost(
         navController = navController,
         startDestination = "inicio"
@@ -54,7 +83,9 @@ fun AppNavigation() {
         composable("inicio") {
             PantallaInicio(
                 cantidadCarrito = cantidadCarrito,
-                onNavegar = { ruta -> navegarCliente(ruta) }
+                sesionAdminActiva = sesionAdminActiva,
+                onNavegar = { ruta -> navegarCliente(ruta) },
+                onNavegarAdmin = { navegarAdmin() }
             )
         }
 
@@ -62,9 +93,7 @@ fun AppNavigation() {
             CatalogoPantalla(
                 cantidadCarrito = cantidadCarrito,
                 onNavegar = { ruta -> navegarCliente(ruta) },
-                onNavegarAAdmin = {
-                    navController.navigate("login_admin")
-                },
+                onNavegarAAdmin = { navegarAdmin() },
                 productViewModel = productoViewModel,
                 carritoViewModel = carritoViewModel
             )
@@ -75,12 +104,13 @@ fun AppNavigation() {
                 carritoViewModel = carritoViewModel,
                 cantidadCarrito = cantidadCarrito,
                 onNavegar = { ruta -> navegarCliente(ruta) },
-                onPedidoConfirmado = { cedula ->
-                    navController.navigate("pedidos/$cedula") {
+                onPedidoConfirmado = { cedula, pedidoId ->
+                    pedidoViewModel.registrarPedidoRecienCreado(cedula, pedidoId)
+                    navController.navigate("pedidos") {
                         popUpTo("inicio") {
                             saveState = true
                         }
-                        launchSingleTop = true
+                        launchSingleTop = false
                     }
                 }
             )
@@ -94,21 +124,12 @@ fun AppNavigation() {
             )
         }
 
-        composable("pedidos/{cedula}") { backStackEntry ->
-            val cedula = backStackEntry.arguments?.getString("cedula").orEmpty()
-            PedidosPantalla(
-                pedidoViewModel = pedidoViewModel,
-                cantidadCarrito = cantidadCarrito,
-                cedulaInicial = cedula,
-                onNavegar = { ruta -> navegarCliente(ruta) }
-            )
-        }
-
         composable("login_admin") {
-            val adminViewModel: AdminViewModel = viewModel()
             PantallaAdmin(
                 viewModel = adminViewModel,
                 productoViewModel = productoViewModel,
+                carritoViewModel = carritoViewModel,
+                cantidadCarrito = cantidadCarrito,
                 onRegresarAlCatalogo = {
                     navController.popBackStack()
                 }
