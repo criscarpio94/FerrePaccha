@@ -11,14 +11,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
@@ -41,6 +46,7 @@ import com.example.ferrepaccha.data.model.PedidoFirebase
 import com.example.ferrepaccha.ui.theme.FerreAmarillo
 import com.example.ferrepaccha.ui.theme.FerreBlanco
 import com.example.ferrepaccha.ui.theme.FerreGrisOscuro
+import com.example.ferrepaccha.util.EstadoPedidoUi
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -48,24 +54,31 @@ import java.util.Locale
 fun PedidosPantalla(
     pedidoViewModel: PedidoViewModel,
     cantidadCarrito: Int,
-    cedulaInicial: String = "",
     onNavegar: (String) -> Unit
 ) {
-    val ultimaCedula by pedidoViewModel.ultimaCedula.collectAsState()
+    val cedulaConsulta by pedidoViewModel.cedulaConsultaActiva.collectAsState()
     val pedidosRecientes by pedidoViewModel.pedidosRecientes.collectAsState()
     val pedidosBusqueda by pedidoViewModel.pedidosBusqueda.collectAsState()
     val estaBuscando by pedidoViewModel.estaBuscando.collectAsState()
 
     var textoBusqueda by remember { mutableStateOf("") }
-    val cedulaActiva = cedulaInicial.ifBlank { ultimaCedula }
+    var cedulaManual by remember { mutableStateOf("") }
+    val sesionActiva = cedulaConsulta.isNotBlank()
 
-    LaunchedEffect(cedulaActiva) {
-        if (cedulaActiva.isNotBlank()) {
-            pedidoViewModel.escucharPedidosRecientes(cedulaActiva)
-        }
+    LaunchedEffect(Unit) {
+        pedidoViewModel.reanudarSeguimientoSiActivo()
     }
 
-    val pedidosMostrar = if (textoBusqueda.isNotBlank()) pedidosBusqueda else pedidosRecientes
+    val pedidosMostrar = if (textoBusqueda.isBlank()) {
+        pedidosRecientes
+    } else {
+        val consulta = textoBusqueda.trim()
+        val coincidenciasLocales = pedidosRecientes.filter { pedido ->
+            pedido.numeroPedido.contains(consulta, ignoreCase = true) ||
+                pedido.cedulaRuc.contains(consulta, ignoreCase = true)
+        }
+        if (coincidenciasLocales.isNotEmpty()) coincidenciasLocales else pedidosBusqueda
+    }
 
     ClienteScaffold(
         pantallaActual = "pedidos",
@@ -94,6 +107,89 @@ fun PedidosPantalla(
                 )
             }
 
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Text(
+                    text = "Consulta con tu cédula o RUC",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = FerreGrisOscuro
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Tu identificación no se guarda en el dispositivo. " +
+                        "Puedes cambiar de pantalla y el seguimiento sigue activo; " +
+                        "se borra al minimizar la app o pulsar Limpiar.",
+                    fontSize = 11.sp,
+                    color = Color.Gray
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = cedulaManual,
+                        onValueChange = { cedulaManual = it },
+                        modifier = Modifier.weight(1f),
+                        placeholder = {
+                            Text(
+                                text = if (sesionActiva && cedulaManual.isBlank()) {
+                                    "Consulta activa (oculta)"
+                                } else {
+                                    "Cédula / RUC"
+                                },
+                                fontSize = 14.sp
+                            )
+                        },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    Button(
+                        onClick = {
+                            if (cedulaManual.isNotBlank()) {
+                                pedidoViewModel.iniciarSeguimientoPorCedula(cedulaManual)
+                            }
+                        },
+                        enabled = cedulaManual.isNotBlank(),
+                        colors = ButtonDefaults.buttonColors(containerColor = FerreAmarillo),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Consultar", color = FerreGrisOscuro, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                if (sesionActiva) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "● Seguimiento en vivo activo",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF059669)
+                        )
+                        OutlinedButton(
+                            onClick = {
+                                cedulaManual = ""
+                                textoBusqueda = ""
+                                pedidoViewModel.limpiarSesionConsulta()
+                            },
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text("Limpiar", fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+
             OutlinedTextField(
                 value = textoBusqueda,
                 onValueChange = {
@@ -106,7 +202,7 @@ fun PedidosPantalla(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 placeholder = { Text("Buscar por cédula/RUC o N° pedido...", fontSize = 14.sp, color = Color.Gray) },
                 leadingIcon = { Text("🔍", modifier = Modifier.padding(start = 8.dp)) },
                 singleLine = true,
@@ -119,7 +215,7 @@ fun PedidosPantalla(
                 )
             )
 
-            if (textoBusqueda.isBlank()) {
+            if (textoBusqueda.isBlank() && sesionActiva) {
                 Text(
                     text = "Pedidos recientes (últimos 10 días)",
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -129,7 +225,7 @@ fun PedidosPantalla(
                 )
             }
 
-            if (estaBuscando) {
+            if (estaBuscando && pedidosMostrar.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = FerreAmarillo)
                 }
@@ -144,8 +240,8 @@ fun PedidosPantalla(
                     Text("📋", fontSize = 56.sp)
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = if (cedulaActiva.isBlank()) {
-                            "Realiza un pedido para ver el seguimiento aquí"
+                        text = if (!sesionActiva) {
+                            "Ingresa tu cédula/RUC y pulsa Consultar para ver tus pedidos"
                         } else {
                             "No hay pedidos para mostrar"
                         },
@@ -160,7 +256,10 @@ fun PedidosPantalla(
                         .padding(horizontal = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    items(pedidosMostrar, key = { it.id }) { pedido ->
+                    items(
+                        items = pedidosMostrar,
+                        key = { pedido -> "${pedido.id}_${pedido.estado}" }
+                    ) { pedido ->
                         TarjetaPedidoCliente(pedido = pedido)
                     }
                     item { Spacer(modifier = Modifier.height(16.dp)) }
@@ -172,22 +271,21 @@ fun PedidosPantalla(
 
 @Composable
 private fun TarjetaPedidoCliente(pedido: PedidoFirebase) {
-    val estado = try {
-        EstadoPedido.valueOf(pedido.estado)
-    } catch (e: Exception) {
-        EstadoPedido.RECIBIDO
-    }
-
-    val colorEstado = when (estado) {
-        EstadoPedido.RECIBIDO -> Color(0xFFDBEAFE) to Color(0xFF1D4ED8)
-        EstadoPedido.PREPARANDO -> Color(0xFFFEF3C7) to Color(0xFFD97706)
-        EstadoPedido.LISTO -> Color(0xFFD1FAE5) to Color(0xFF065F46)
-        EstadoPedido.ENTREGADO -> Color(0xFFE2E8F0) to Color(0xFF475569)
-    }
+    val estado = EstadoPedidoUi.parsear(pedido.estado)
+    val (colorFondoEstado, colorTextoEstado) = EstadoPedidoUi.colores(estado)
 
     val fechaTexto = pedido.fechaCreacion?.toDate()?.let {
-        SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(it)
+        SimpleDateFormat("dd-MMM, hh:mm a", Locale("es", "EC")).format(it)
     } ?: "Sin fecha"
+
+    val tipoEntrega = if (pedido.tipoEntrega == "DOMICILIO") "🚚 Domicilio" else "🏪 Retiro en local"
+    val pasos = listOf(
+        EstadoPedido.RECIBIDO to "Confirmado",
+        EstadoPedido.PREPARANDO to "Preparando",
+        EstadoPedido.LISTO to "Listo",
+        EstadoPedido.ENTREGADO to "Entregado"
+    )
+    val indiceActual = pasos.indexOfFirst { it.first == estado }.coerceAtLeast(0)
 
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -200,35 +298,66 @@ private fun TarjetaPedidoCliente(pedido: PedidoFirebase) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(pedido.numeroPedido, fontWeight = FontWeight.Black, fontSize = 14.sp, color = FerreGrisOscuro)
+                Column {
+                    Text(pedido.numeroPedido, fontWeight = FontWeight.Black, fontSize = 14.sp, color = FerreGrisOscuro)
+                    Text(fechaTexto, fontSize = 11.sp, color = Color.Gray)
+                }
                 Box(
                     modifier = Modifier
-                        .background(colorEstado.first, RoundedCornerShape(8.dp))
+                        .background(colorFondoEstado, RoundedCornerShape(8.dp))
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
-                    Text(estado.etiqueta(), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = colorEstado.second)
+                    Text(estado.etiqueta(), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = colorTextoEstado)
                 }
             }
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(fechaTexto, fontSize = 11.sp, color = Color.Gray)
-            Text(
-                "${pedido.nombresCliente} ${pedido.apellidosCliente}".trim(),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium
-            )
-            Text("Entrega: ${pedido.tipoEntrega}", fontSize = 12.sp, color = Color.Gray)
+
+            Spacer(modifier = Modifier.height(10.dp))
+            pedido.items.take(3).forEach { item ->
+                Text("${item.cantidad}x ${item.nombre}", fontSize = 13.sp, color = FerreGrisOscuro)
+            }
+            if (pedido.items.size > 3) {
+                Text("+${pedido.items.size - 3} producto(s) más", fontSize = 11.sp, color = Color.Gray)
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                "Total: $${String.format("%.2f", pedido.total)}",
-                fontWeight = FontWeight.Black,
-                fontSize = 16.sp,
-                color = FerreGrisOscuro
-            )
-            Text(
-                "${pedido.items.size} producto(s)",
-                fontSize = 11.sp,
-                color = Color.Gray
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(tipoEntrega, fontSize = 12.sp, color = Color.Gray)
+                Text(
+                    "$${String.format("%.2f", pedido.total)}",
+                    fontWeight = FontWeight.Black,
+                    fontSize = 18.sp,
+                    color = FerreGrisOscuro
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                pasos.forEachIndexed { index, (estadoPaso, etiqueta) ->
+                    val alcanzado = index <= indiceActual
+                    val colorPaso = EstadoPedidoUi.colorPaso(estadoPaso, alcanzado)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .background(colorPaso, CircleShape)
+                        )
+                        Text(
+                            etiqueta,
+                            fontSize = 8.sp,
+                            color = if (alcanzado) colorPaso else Color.Gray,
+                            maxLines = 1
+                        )
+                    }
+                }
+            }
         }
     }
 }
