@@ -136,6 +136,13 @@ fun PedidosPantalla(
                         value = cedulaManual,
                         onValueChange = { cedulaManual = it },
                         modifier = Modifier.weight(1f),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedIndicatorColor = FerreAmarillo,
+                            unfocusedIndicatorColor = Color(0xFFCBD5E1),
+                            focusedTextColor = Color.DarkGray
+                        ),
                         placeholder = {
                             Text(
                                 text = if (sesionActiva && cedulaManual.isBlank()) {
@@ -143,7 +150,7 @@ fun PedidosPantalla(
                                 } else {
                                     "Cédula / RUC"
                                 },
-                                fontSize = 14.sp
+                                fontSize = 14.sp, color = Color.Gray
                             )
                         },
                         singleLine = true,
@@ -211,7 +218,8 @@ fun PedidosPantalla(
                     focusedContainerColor = Color.Transparent,
                     unfocusedContainerColor = Color.Transparent,
                     focusedIndicatorColor = FerreAmarillo,
-                    unfocusedIndicatorColor = Color(0xFFCBD5E1)
+                    unfocusedIndicatorColor = Color(0xFFCBD5E1),
+                    focusedTextColor = Color.DarkGray
                 )
             )
 
