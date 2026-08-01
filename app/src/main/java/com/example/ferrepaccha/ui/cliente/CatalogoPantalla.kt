@@ -170,7 +170,7 @@ fun CatalogoPantalla(
                 Text(text = "🛒", fontSize = 22.sp)
                 Box(
                     modifier = Modifier
-                        .offset(x = 10.dp, y = (-6).dp)
+                        .offset(x = 4.dp, y = (-20).dp)
                         .background(
                             if (cantidadCarrito > 0) FerreAmarillo else Color(0xFF64748B),
                             CircleShape
@@ -317,6 +317,7 @@ fun CatalogoPantalla(
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         val context = LocalContext.current
 
+        //DETALLE DEL PRODUCTO AL SELECCIONAR TARJETA
         ModalBottomSheet(
             onDismissRequest = { mostrarDetalleBottomSheet = false },
             sheetState = sheetState,
@@ -331,10 +332,10 @@ fun CatalogoPantalla(
                     .padding(horizontal = 20.dp)
                     .padding(bottom = 32.dp)
             ) {
-                ZonaImagenProducto(
+                ZonaImagenDetalle(
                     urlImagen = prod.urlImagen,
                     nombre = prod.nombre,
-                    altura = 200.dp,
+                    altura = 220.dp,
                     emojiFontSize = 72.sp,
                     esquinas = 20.dp,
                     badgeIzquierdo = {
@@ -393,7 +394,7 @@ fun CatalogoPantalla(
                         text = "IVA ${prod.porcentajeIva.toInt()}%",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF64748B),
+                        color = Color(0xCE131212),
                         modifier = Modifier
                             .background(Color(0xFFF1F5F9), RoundedCornerShape(8.dp))
                             .padding(horizontal = 8.dp, vertical = 4.dp)
@@ -423,7 +424,7 @@ fun CatalogoPantalla(
                 }
 
                 Text(
-                    text = "$${String.format("%.2f", precioSeleccionado)}",
+                    text = "$ ${String.format("%.2f", precioSeleccionado)}",
                     fontWeight = FontWeight.Black,
                     fontSize = 28.sp,
                     color = FerreGrisOscuro
@@ -452,14 +453,14 @@ fun CatalogoPantalla(
                             text = "-",
                             modifier = Modifier
                                 .padding(horizontal = 18.dp)
-                                .clickable { if (cantidadDetalle > 1) cantidadDetalle-- },
+                                .clickable { if (cantidadDetalle > 0) cantidadDetalle-- },
                             fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
+                            fontSize = 30.sp
                         )
                         Text(
                             text = cantidadDetalle.toString(),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 20.sp,
                             modifier = Modifier.width(20.dp),
                             textAlign = TextAlign.Center
                         )
@@ -469,7 +470,7 @@ fun CatalogoPantalla(
                                 .padding(horizontal = 10.dp)
                                 .clickable { cantidadDetalle++ },
                             fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
+                            fontSize = 20.sp
                         )
                     }
 
@@ -516,41 +517,91 @@ fun ZonaImagenProducto(
     badgeIzquierdo: @Composable () -> Unit = {},
     badgeDerecho: @Composable () -> Unit = {}
 ) {
-    Column(
+    // 1. Contenedor principal tipo Box para encimar elementos en capas
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(altura)
             .clip(RoundedCornerShape(esquinas))
-            .background(FerreGrisClaro)
+            .background(FerreGrisClaro) // Mantiene el fondo gris limpio de la tarjeta
     ) {
+        // 2. Capa de Fondo: La imagen ocupando el espacio disponible sin márgenes internos
+        if (urlImagen.isNotBlank()) {
+            AsyncImage(
+                model = urlImagen,
+                contentDescription = nombre,
+                modifier = Modifier.fillMaxSize(),
+                // Crop expandirá la imagen eliminando el exceso de fondo blanco lateral/vertical
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = EMOJI_IMAGEN_POR_DEFECTO, fontSize = emojiFontSize)
+            }
+        }
+
+        // 3. Capa Superior: Los badges flotando limpiamente sobre la imagen
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp),
+                .padding(horizontal = 8.dp, vertical = 8.dp), // Margen exterior del badge respecto a la tarjeta
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             badgeIzquierdo()
             badgeDerecho()
         }
+    }
+}
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .padding(horizontal = 12.dp, vertical = 4.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            if (urlImagen.isNotBlank()) {
-                AsyncImage(
-                    model = urlImagen,
-                    contentDescription = nombre,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Fit
-                )
-            } else {
+//Nueva funcion para ajustar la imagen del detalle de producto
+@Composable
+fun ZonaImagenDetalle(
+    urlImagen: String,
+    nombre: String,
+    altura: Dp,
+    emojiFontSize: TextUnit,
+    esquinas: Dp = 20.dp,
+    badgeIzquierdo: @Composable () -> Unit = {},
+    badgeDerecho: @Composable () -> Unit = {}
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(altura)
+            .clip(RoundedCornerShape(esquinas))
+            .background(FerreGrisClaro)
+    ) {
+        if (urlImagen.isNotBlank()) {
+            AsyncImage(
+                model = urlImagen,
+                contentDescription = nombre,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp), // Margen para que el producto no toque los bordes grises
+                contentScale = ContentScale.Fit
+            )
+        } else {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
                 Text(text = EMOJI_IMAGEN_POR_DEFECTO, fontSize = emojiFontSize)
             }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            badgeIzquierdo()
+            badgeDerecho()
         }
     }
 }
@@ -579,14 +630,14 @@ fun SelectorMedidaVenta(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = producto.medidaPrincipal,
-                    fontSize = 13.sp,
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = FerreGrisOscuro
+                    color = Color.Red
                 )
                 Text(
-                    text = "$${String.format("%.2f", producto.precioPrincipal)}",
-                    fontSize = 12.sp,
-                    color = Color.Blue,
+                    text = "$ ${String.format("%.2f", producto.precioPrincipal)}",
+                    fontSize = 18.sp,
+                    color = Color.Black,
                     fontWeight = FontWeight.ExtraBold
                 )
             }
@@ -607,14 +658,14 @@ fun SelectorMedidaVenta(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = sub.nombreSubMedida,
-                        fontSize = 13.sp,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color = FerreGrisOscuro
+                        color = Color.Red
                     )
                     Text(
-                        text = "$${String.format("%.2f", sub.precioSubMedida)}",
-                        fontSize = 12.sp,
-                        color = Color.Blue,
+                        text = "$ ${String.format("%.2f", sub.precioSubMedida)}",
+                        fontSize = 18.sp,
+                        color = Color.Black,
                         fontWeight = FontWeight.ExtraBold
                     )
                 }
@@ -692,7 +743,7 @@ fun CardProducto(
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "$${String.format("%.2f", producto.precioPrincipal)}",
+                text = "$ ${String.format("%.2f", producto.precioPrincipal)}",
                 fontWeight = FontWeight.Black,
                 fontSize = 18.sp,
                 color = FerreGrisOscuro
@@ -716,16 +767,18 @@ fun CardProducto(
                         text = "-",
                         modifier = Modifier
                             .padding(horizontal = 6.dp)
-                            .clickable { if (cantidad > 1) cantidad-- },
+                            .clickable { if (cantidad > 0) cantidad-- },
                         fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
+                        fontSize = 25.sp,
+                        color = Color.DarkGray
                     )
                     Text(
                         text = cantidad.toString(),
                         fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp,
+                        fontSize = 20.sp,
                         modifier = Modifier.width(14.dp),
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        color = Color.DarkGray
                     )
                     Text(
                         text = "+",
@@ -733,7 +786,8 @@ fun CardProducto(
                             .padding(horizontal = 6.dp)
                             .clickable { cantidad++ },
                         fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
+                        fontSize = 20.sp,
+                        color = Color.DarkGray
                     )
                 }
 
