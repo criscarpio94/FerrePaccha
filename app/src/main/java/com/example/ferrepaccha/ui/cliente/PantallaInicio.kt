@@ -176,18 +176,22 @@ fun PantallaInicio(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 val listaCategorias = listOf(
+                    Pair("\uD83E\uDDF0", "General"),
                     Pair("🔧", "Herramientas"),
-                    Pair("⚡", "Eléctrico"),
                     Pair("🎨", "Pintura"),
+                    Pair("\uD83D\uDEB0", "Tubería"),
+                    Pair("⛓\uFE0F", "Hierro"),
+                    Pair("\uD83E\uDEB5", "Madera"),
+                    Pair("\uD83D\uDD0C", "Eléctrico"),
                     Pair("🧱", "Construcción"),
-                    Pair("🛠️", "Plomería")
+                    Pair("✨", "Acabados")
                 )
 
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.height(150.dp)
+                    modifier = Modifier.height(205.dp)
                 ) {
                     items(listaCategorias) { (icono, nombre) ->
                         Row(
