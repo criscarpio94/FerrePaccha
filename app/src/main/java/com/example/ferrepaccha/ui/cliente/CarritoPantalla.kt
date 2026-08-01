@@ -188,7 +188,7 @@ fun CarritoPantalla(
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(14.dp)
                     ) {
-                        Text("➕ Añadir Productos", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text("➕ Añadir Productos", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.DarkGray)
                     }
                 }
 
@@ -234,7 +234,7 @@ fun CarritoPantalla(
                         )
                         TipoEntregaChip(
                             titulo = "🚚 Domicilio",
-                            subtitulo = "+$${String.format("%.2f", CarritoViewModel.RECARGO_DOMICILIO)}",
+                            subtitulo = "+$ ${String.format("%.2f", CarritoViewModel.RECARGO_DOMICILIO)}",
                             seleccionado = tipoEntrega == "DOMICILIO",
                             onClick = { carritoViewModel.cambiarTipoEntrega("DOMICILIO") },
                             modifier = Modifier.weight(1f)
@@ -253,9 +253,9 @@ fun CarritoPantalla(
                         "Tipo de entrega",
                         if (tipoEntrega == "DOMICILIO") "Domicilio" else "Retiro en local"
                     )
-                    FilaResumenOscuro("Subtotal", "$${String.format("%.2f", subtotal)}")
+                    FilaResumenOscuro("Subtotal", "$ ${String.format("%.2f", subtotal)}")
                     if (recargo > 0) {
-                        FilaResumenOscuro("Recargo domicilio", "$${String.format("%.2f", recargo)}")
+                        FilaResumenOscuro("Recargo domicilio", "$ ${String.format("%.2f", recargo)}")
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(
@@ -264,7 +264,7 @@ fun CarritoPantalla(
                     ) {
                         Text("Total", color = FerreBlanco.copy(alpha = 0.7f), fontSize = 14.sp)
                         Text(
-                            "$${String.format("%.2f", total)}",
+                            "$ ${String.format("%.2f", total)}",
                             color = FerreAmarillo,
                             fontWeight = FontWeight.Black,
                             fontSize = 22.sp
@@ -330,7 +330,7 @@ private fun ItemCarritoFila(
                     color = Color.Gray
                 )
                 Text(
-                    "$${String.format("%.2f", item.precioUnitario)}",
+                    "$ ${String.format("%.2f", item.precioUnitario)}",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Black,
                     color = FerreGrisOscuro
@@ -359,19 +359,22 @@ private fun ItemCarritoFila(
                         modifier = Modifier
                             .clickable { onCambiarCantidad(item.cantidad - 1) }
                             .padding(horizontal = 8.dp, vertical = 4.dp),
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = Color.DarkGray
                     )
                     Text(
                         item.cantidad.toString(),
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 6.dp)
+                        modifier = Modifier.padding(horizontal = 6.dp),
+                        color = Color.DarkGray
                     )
                     Text(
                         "+",
                         modifier = Modifier
                             .clickable { onCambiarCantidad(item.cantidad + 1) }
                             .padding(horizontal = 8.dp, vertical = 4.dp),
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = Color.DarkGray
                     )
                 }
             }
