@@ -26,6 +26,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -91,7 +92,15 @@ fun FormularioUsuarioPantalla(
                 label = { Text("Nombre completo") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                shape = RoundedCornerShape(10.dp)
+                shape = RoundedCornerShape(10.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedIndicatorColor = FerreAmarillo,
+                    unfocusedIndicatorColor = Color(0xFFCBD5E1),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                )
             )
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
@@ -100,7 +109,15 @@ fun FormularioUsuarioPantalla(
                 label = { Text("Correo electrónico") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                shape = RoundedCornerShape(10.dp)
+                shape = RoundedCornerShape(10.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedIndicatorColor = FerreAmarillo,
+                    unfocusedIndicatorColor = Color(0xFFCBD5E1),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                )
             )
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
@@ -114,7 +131,15 @@ fun FormularioUsuarioPantalla(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
-                shape = RoundedCornerShape(10.dp)
+                shape = RoundedCornerShape(10.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedIndicatorColor = FerreAmarillo,
+                    unfocusedIndicatorColor = Color(0xFFCBD5E1),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                )
             )
             if (esEdicion) {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -141,7 +166,14 @@ fun FormularioUsuarioPantalla(
                             ExposedDropdownMenuDefaults.TrailingIcon(menuRolExpandido)
                         }
                     },
-                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                    modifier = Modifier.menuAnchor().fillMaxWidth(),
+                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        disabledTextColor = Color.Black,
+                        disabledBorderColor = Color(0xFFCBD5E1),
+                        disabledLabelColor = Color.Gray
+                    )
                 )
                 ExposedDropdownMenu(
                     expanded = menuRolExpandido && puedeCambiarRol,

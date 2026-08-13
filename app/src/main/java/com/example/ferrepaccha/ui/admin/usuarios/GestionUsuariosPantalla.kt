@@ -147,7 +147,7 @@ fun TarjetaUsuarioItem(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC))
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFE1ECE6))
     ) {
         Row(
             modifier = Modifier.padding(16.dp).fillMaxWidth(),
@@ -156,11 +156,11 @@ fun TarjetaUsuarioItem(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(usuario.nombreMostrable(), fontWeight = FontWeight.Bold, color = FerreGrisOscuro)
-                Text(usuario.correo, fontSize = 12.sp, color = Color.Gray)
-                Text("Rol: ${usuario.rol}", fontSize = 11.sp, color = Color.Gray)
+                Text(usuario.correo, fontSize = 12.sp, color = FerreGrisOscuro)
+                Text("Rol: ${usuario.rol}", fontSize = 11.sp, color = FerreGrisOscuro)
             }
             Column {
-                TextButton(onClick = onEditar) { Text("✏️ Editar", fontSize = 12.sp) }
+                TextButton(onClick = onEditar) { Text("✏️ Editar", fontSize = 12.sp, color = Color.Blue) }
                 TextButton(onClick = onEliminar) { Text("🗑️ Eliminar", fontSize = 12.sp, color = Color.Red) }
             }
         }
