@@ -96,6 +96,7 @@ fun ComponenteGestionPedidos(
                 pendientes.forEach { pedido ->
                     CardPedidoAdmin(
                         pedido = pedido,
+                        containerColor = Color(0xFFFFE5A3),
                         onClick = {
                             viewModel.abrirDetallePedido(pedido.id, TipoSubpantalla.GESTION_PEDIDOS)
                         }
@@ -258,7 +259,9 @@ private fun EncabezadoBusquedaPedidos(
                     focusedContainerColor = FerreBlanco,
                     unfocusedContainerColor = FerreBlanco,
                     focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedTextColor = Color.Black,
+                    unfocusedSuffixColor = Color.Black
                 )
             )
             Box(
@@ -277,7 +280,12 @@ private fun EncabezadoBusquedaPedidos(
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         disabledContainerColor = FerreBlanco,
-                        disabledBorderColor = Color.Transparent
+                        disabledBorderColor = Color.Transparent,
+                        focusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent,
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        disabledTextColor = Color.Black
                     )
                 )
             }
@@ -289,6 +297,7 @@ private fun EncabezadoBusquedaPedidos(
 fun CardPedidoAdmin(
     pedido: PedidoFirebase,
     compacto: Boolean = false,
+    containerColor: Color? = null,
     onClick: () -> Unit
 ) {
     val estado = try {
@@ -307,12 +316,14 @@ fun CardPedidoAdmin(
     }.orEmpty()
     val tipoEntrega = if (pedido.tipoEntrega == "DOMICILIO") "🚚 Domicilio" else "🏪 Local"
 
+    val fondoFinal = containerColor ?: if (compacto) Color(0xF2D5FDE7) else Color.White
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = if (compacto) Color(0xFFF9F9F9) else Color.White),
+        colors = CardDefaults.cardColors(containerColor = fondoFinal),
         elevation = CardDefaults.cardElevation(defaultElevation = if (compacto) 0.dp else 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {

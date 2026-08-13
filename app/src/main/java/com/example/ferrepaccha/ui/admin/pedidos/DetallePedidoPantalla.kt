@@ -129,7 +129,7 @@ fun DetallePedidoPantalla(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC))
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFDCEBFD))
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
@@ -143,7 +143,7 @@ fun DetallePedidoPantalla(
                     Text(pedido.telefonoCliente, color = Color.Gray)
                     Text(pedido.direccionEntrega, color = Color.Gray)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("$tipoEntregaTexto  •  $fechaTexto", fontSize = 13.sp, color = Color.Gray)
+                    Text("$tipoEntregaTexto  •  $fechaTexto", fontSize = 13.sp, color = Color.DarkGray)
                 }
             }
 
@@ -211,7 +211,7 @@ fun DetallePedidoPantalla(
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
-            OutlinedButton(
+            Button(
                 onClick = {
                     adminViewModel.exportarPedidoPdf(context) { result ->
                         result.onSuccess { file ->
@@ -248,9 +248,12 @@ fun DetallePedidoPantalla(
                 },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, Color(0xFFCBD5E1))
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF9CBFF5)
+                ),
+                border = BorderStroke(1.dp, Color(0xFF4B87EF))
             ) {
-                Text("📄 Exportar como PDF", fontWeight = FontWeight.SemiBold)
+                Text("📄 Exportar como PDF", fontWeight = FontWeight.SemiBold, color = Color.DarkGray)
             }
         }
     }
@@ -261,7 +264,7 @@ fun TarjetaProductoPedidoItem(nombre: String, detalles: String, cantidad: Int, p
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC))
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFD8FFD8))
     ) {
         Row(
             modifier = Modifier
