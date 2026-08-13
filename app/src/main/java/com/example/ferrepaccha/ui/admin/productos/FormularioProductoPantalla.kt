@@ -39,6 +39,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -178,13 +179,29 @@ fun FormularioProductoPantalla(
                     value = adminViewModel.codigoProductoInput,
                     onValueChange = { adminViewModel.codigoProductoInput = it },
                     label = { Text("Código producto") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = FerreAmarillo,
+                        unfocusedIndicatorColor = Color(0xFFCBD5E1),
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
                 )
                 OutlinedTextField(
                     value = adminViewModel.marcaProductoInput,
                     onValueChange = { adminViewModel.marcaProductoInput = it },
                     label = { Text("Marca") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = FerreAmarillo,
+                        unfocusedIndicatorColor = Color(0xFFCBD5E1),
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
                 )
             }
 
@@ -193,14 +210,30 @@ fun FormularioProductoPantalla(
                 value = adminViewModel.nombreProductoInput,
                 onValueChange = { adminViewModel.nombreProductoInput = it },
                 label = { Text("Nombre del producto") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedIndicatorColor = FerreAmarillo,
+                    unfocusedIndicatorColor = Color(0xFFCBD5E1),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                ),
             )
             Spacer(modifier = Modifier.height(12.dp))
             OutlinedTextField(
                 value = adminViewModel.medidaProductoInput,
                 onValueChange = { adminViewModel.medidaProductoInput = it },
                 label = { Text("Medida principal (Ej: Unidad, Galón)") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedIndicatorColor = FerreAmarillo,
+                    unfocusedIndicatorColor = Color(0xFFCBD5E1),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                ),
             )
             Spacer(modifier = Modifier.height(12.dp))
             OutlinedTextField(
@@ -208,7 +241,15 @@ fun FormularioProductoPantalla(
                 onValueChange = { adminViewModel.descripcionProductoInput = it },
                 label = { Text("Descripción") },
                 modifier = Modifier.fillMaxWidth(),
-                maxLines = 3
+                maxLines = 3,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedIndicatorColor = FerreAmarillo,
+                    unfocusedIndicatorColor = Color(0xFFCBD5E1),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                ),
             )
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -222,7 +263,15 @@ fun FormularioProductoPantalla(
                     readOnly = true,
                     label = { Text("Categoría") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(adminViewModel.menuCategoriasExpandido) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                    modifier = Modifier.menuAnchor().fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = FerreAmarillo,
+                        unfocusedIndicatorColor = Color(0xFFCBD5E1),
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
                 )
                 ExposedDropdownMenu(
                     expanded = adminViewModel.menuCategoriasExpandido,
@@ -248,7 +297,15 @@ fun FormularioProductoPantalla(
                     value = adminViewModel.precioProductoInput,
                     onValueChange = { adminViewModel.precioProductoInput = it },
                     label = { Text("Precio ($)") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = FerreAmarillo,
+                        unfocusedIndicatorColor = Color(0xFFCBD5E1),
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
                 )
                 ExposedDropdownMenuBox(
                     expanded = menuIvaExpandido,
@@ -261,7 +318,15 @@ fun FormularioProductoPantalla(
                         readOnly = true,
                         label = { Text("IVA") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(menuIvaExpandido) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedIndicatorColor = FerreAmarillo,
+                            unfocusedIndicatorColor = Color(0xFFCBD5E1),
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black
+                        ),
                     )
                     ExposedDropdownMenu(
                         expanded = menuIvaExpandido,
@@ -307,14 +372,30 @@ fun FormularioProductoPantalla(
                             OutlinedTextField(
                                 value = adminViewModel.nombreSubMedidaInput,
                                 onValueChange = { adminViewModel.nombreSubMedidaInput = it },
-                                label = { Text("Nombre sub-medida") },
-                                modifier = Modifier.weight(1f)
+                                label = { Text("Sub-medida") },
+                                modifier = Modifier.weight(1f),
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
+                                    focusedIndicatorColor = FerreAmarillo,
+                                    unfocusedIndicatorColor = Color(0xFFCBD5E1),
+                                    focusedTextColor = Color.Black,
+                                    unfocusedTextColor = Color.Black
+                                ),
                             )
                             OutlinedTextField(
                                 value = adminViewModel.precioSubMedidaInput,
                                 onValueChange = { adminViewModel.precioSubMedidaInput = it },
                                 label = { Text("Precio sub ($)") },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
+                                    focusedIndicatorColor = FerreAmarillo,
+                                    unfocusedIndicatorColor = Color(0xFFCBD5E1),
+                                    focusedTextColor = Color.Black,
+                                    unfocusedTextColor = Color.Black
+                                ),
                             )
                         }
                     }
@@ -327,7 +408,15 @@ fun FormularioProductoPantalla(
                     value = adminViewModel.motivoAuditoriaInput,
                     onValueChange = { adminViewModel.motivoAuditoriaInput = it },
                     label = { Text("Motivo del cambio (auditoría)") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = FerreAmarillo,
+                        unfocusedIndicatorColor = Color(0xFFCBD5E1),
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
                 )
             }
 

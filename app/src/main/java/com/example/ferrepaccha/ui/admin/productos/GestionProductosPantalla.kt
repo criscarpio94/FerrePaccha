@@ -28,6 +28,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -115,7 +116,14 @@ fun GestionProductosPantalla(
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("Buscar por nombre, marca o código...") },
                 singleLine = true,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedIndicatorColor = FerreAmarillo,
+                    unfocusedIndicatorColor = Color(0xFFCBD5E1),
+                    focusedTextColor = Color.Black
+                )
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -230,7 +238,7 @@ fun TarjetaProductoItem(
 
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = "$${String.format("%.2f", producto.precioPrincipal)}",
+                    text = "$ ${String.format("%.2f", producto.precioPrincipal)}",
                     fontWeight = FontWeight.Black,
                     fontSize = 16.sp,
                     color = FerreGrisOscuro
@@ -238,7 +246,7 @@ fun TarjetaProductoItem(
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TextButton(onClick = onEditarClick) {
-                        Text("✏️ Editar", fontSize = 12.sp)
+                        Text("✏️ Editar", fontSize = 12.sp, color = Color.Blue)
                     }
                     TextButton(onClick = onEliminarClick) {
                         Text("🗑️ Eliminar", fontSize = 12.sp, color = Color.Red)
