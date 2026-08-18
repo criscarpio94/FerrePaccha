@@ -204,7 +204,9 @@ fun PantallaFormularioCliente(
         focusedContainerColor = Color(0xFFF8FAFC),
         unfocusedContainerColor = Color(0xFFF8FAFC),
         focusedBorderColor = Color(0xFFE2E8F0),
-        unfocusedBorderColor = Color(0xFFE2E8F0)
+        unfocusedBorderColor = Color(0xFFE2E8F0),
+        focusedTextColor = Color.Black,
+        unfocusedTextColor = Color.Black
     )
 
     Column(
